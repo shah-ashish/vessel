@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_windows_os",
+      "type": "rectangle",
+      "x": 40,
+      "y": 60,
+      "width": 260,
+      "height": 95,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 101,
+      "zIndex": 1,
+      "text": "🪟 Windows 11 WASAPI\n• Loopback Audio Capture\n• 48,000 Hz Stereo PCM\n• Zero audio distortion",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_vessel_core",
+      "type": "rectangle",
+      "x": 380,
+      "y": 60,
+      "width": 280,
+      "height": 115,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 102,
+      "zIndex": 1,
+      "text": "🦀 Vessel Core Engine (Tokio)\n• Resampling & Downmixing\n• 20-byte LAUD Framing Engine\n• Axum WebSocket & HTTP Server\n• UDP Auto-Discovery Beacon (:8082)",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_win32_gui",
+      "type": "rectangle",
+      "x": 380,
+      "y": 250,
+      "width": 280,
+      "height": 125,
+      "strokeColor": "#8b5cf6",
+      "fillColor": "#8b5cf61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 103,
+      "zIndex": 1,
+      "text": "🖥️ Native Win32 Desktop App\n• Windows Taskbar Icon & HWND\n• GDI Live Stereo VU Meters\n• Copy Hotspot Link to Clipboard\n• Stop / Resume Broadcast Toggle\n• 100% Native - No Browser / No HTML",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_android_receiver",
+      "type": "rectangle",
+      "x": 740,
+      "y": 60,
+      "width": 260,
+      "height": 115,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b1a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 104,
+      "zIndex": 1,
+      "text": "📱 Android Mobile Receiver\n• Auto-Discovers Laptop via UDP\n• OkHttp WebSocket Receiver\n• Adaptive Jitter Buffer (Micro-slew)\n• AudioTrack Low-Latency Playback",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_wasapi_to_core",
+      "type": "arrow",
+      "x": 300,
+      "y": 107,
+      "width": 80,
+      "height": 0,
+      "strokeColor": "#3b82f6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 201,
+      "zIndex": 10,
+      "text": "PCM Capture",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_windows_os",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_vessel_core",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_core_to_gui",
+      "type": "arrow",
+      "x": 520,
+      "y": 175,
+      "width": 0,
+      "height": 75,
+      "strokeColor": "#8b5cf6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 202,
+      "zIndex": 10,
+      "text": "Atomic Levels & Streaming State",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_vessel_core",
+        "port": "bottom"
+      },
+      "endBinding": {
+        "elementId": "node_win32_gui",
+        "port": "top"
+      }
+    },
+    {
+      "id": "arrow_core_to_phone",
+      "type": "arrow",
+      "x": 660,
+      "y": 107,
+      "width": 80,
+      "height": 0,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 203,
+      "zIndex": 10,
+      "text": "LAUD v1 Packets",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_vessel_core",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_android_receiver",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

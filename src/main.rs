@@ -15,7 +15,7 @@ use std::{
     net::SocketAddr,
     path::PathBuf,
     sync::{
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc, Mutex,
     },
     time::Duration,
@@ -25,6 +25,7 @@ use tower_http::services::ServeDir;
 use tracing::{error, info, warn};
 
 pub mod audio;
+pub mod gui;
 use audio::{
     downmix::ChannelDownmixer,
     protocol::{create_laud_packet, FLAG_DISCONTINUITY, FLAG_SILENCE},
@@ -46,6 +47,7 @@ struct AppState {
     audio_tx: broadcast::Sender<AudioPacket>,
     connected_clients: Arc<AtomicUsize>,
     peak_levels: Arc<Mutex<(f32, f32)>>,
+    is_streaming: Arc<AtomicBool>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -88,34 +90,6 @@ fn get_local_ip() -> Option<String> {
     Some(socket.local_addr().ok()?.ip().to_string())
 }
 
-fn open_desktop_gui() {
-    let edge_paths = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-    ];
-    let mut launched = false;
-    for path in edge_paths {
-        if std::path::Path::new(path).exists() {
-            if std::process::Command::new(path)
-                .args([
-                    "--app=http://127.0.0.1:8080/desktop.html",
-                    "--window-size=480,700",
-                ])
-                .spawn()
-                .is_ok()
-            {
-                launched = true;
-                break;
-            }
-        }
-    }
-    if !launched {
-        let _ = std::process::Command::new("cmd")
-            .args(["/c", "start", "http://127.0.0.1:8080/desktop.html"])
-            .spawn();
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().with_env_filter("info").init();
@@ -124,11 +98,13 @@ async fn main() -> Result<()> {
     let (audio_tx, _) = broadcast::channel(AUDIO_CHANNEL_CAPACITY);
     let connected_clients = Arc::new(AtomicUsize::new(0));
     let peak_levels = Arc::new(Mutex::new((0.0f32, 0.0f32)));
+    let is_streaming = Arc::new(AtomicBool::new(true));
 
     let state = AppState {
         audio_tx: audio_tx.clone(),
         connected_clients: connected_clients.clone(),
         peak_levels: peak_levels.clone(),
+        is_streaming: is_streaming.clone(),
     };
 
     let wav_writer = match &config.record_wav {
@@ -167,33 +143,38 @@ async fn main() -> Result<()> {
         .route("/ws", get(websocket_handler))
         .route("/api/info", get(api_info_handler))
         .route("/api/status", get(api_status_handler))
-        .route(
-            "/desktop",
-            get(|| async { axum::response::Redirect::temporary("/desktop.html") }),
-        )
         .nest_service("/", ServeDir::new("web"))
-        .with_state(state);
+        .with_state(state.clone());
 
     let local_ip = get_local_ip().unwrap_or_else(|| "127.0.0.1".to_string());
     let addr: SocketAddr = LISTEN_ADDR.parse()?;
     info!("Server listening on http://127.0.0.1:8080");
     info!("LAN / Hotspot access: http://{}:8080", local_ip);
-    info!("Desktop GUI: http://127.0.0.1:8080/desktop.html");
 
     if let Some(path) = &config.record_wav {
         info!("Audio recording active -> {}", path.display());
     }
 
-    // Launch Desktop GUI window unless --headless flag is passed
+    // Spawn HTTP and WebSocket server in background
+    tokio::spawn(async move {
+        if let Ok(listener) = tokio::net::TcpListener::bind(addr).await {
+            let _ = axum::serve(listener, app).tcp_nodelay(true).await;
+        }
+    });
+
+    // Run proper native desktop GUI application on main thread (with real Taskbar window)
     if !config.headless {
-        tokio::spawn(async {
-            tokio::time::sleep(Duration::from_millis(350)).await;
-            open_desktop_gui();
-        });
+        gui::run_native_gui(
+            peak_levels,
+            connected_clients,
+            is_streaming,
+            format!("http://{}:8080", local_ip),
+        );
+    } else {
+        info!("Running in headless mode. Press Ctrl+C to stop.");
+        tokio::signal::ctrl_c().await?;
     }
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).tcp_nodelay(true).await?;
     Ok(())
 }
 
@@ -230,13 +211,15 @@ async fn websocket_handler(
     State(state): State<AppState>,
 ) -> impl IntoResponse {
     let clients = state.connected_clients.clone();
-    ws.on_upgrade(move |socket| handle_socket(socket, state.audio_tx.subscribe(), clients))
+    let is_streaming = state.is_streaming.clone();
+    ws.on_upgrade(move |socket| handle_socket(socket, state.audio_tx.subscribe(), clients, is_streaming))
 }
 
 async fn handle_socket(
     mut socket: WebSocket,
     mut rx: broadcast::Receiver<AudioPacket>,
     clients: Arc<AtomicUsize>,
+    is_streaming: Arc<AtomicBool>,
 ) {
     clients.fetch_add(1, Ordering::SeqCst);
     let mut stream_mode = ClientStreamMode::Off;
@@ -273,13 +256,16 @@ async fn handle_socket(
             packet = rx.recv(), if stream_mode != ClientStreamMode::Off => {
                 match packet {
                     Ok(audio_packet) => {
-                        let msg = match stream_mode {
-                            ClientStreamMode::Laud => Message::Binary(audio_packet.laud_frame.to_vec()),
-                            ClientStreamMode::Raw => Message::Binary(audio_packet.raw_frame.to_vec()),
-                            ClientStreamMode::Off => unreachable!(),
-                        };
-                        if socket.send(msg).await.is_err() {
-                            break;
+                        // Only send audio data if streaming is active (controlled from Native Desktop GUI)
+                        if is_streaming.load(Ordering::Relaxed) {
+                            let msg = match stream_mode {
+                                ClientStreamMode::Laud => Message::Binary(audio_packet.laud_frame.to_vec()),
+                                ClientStreamMode::Raw => Message::Binary(audio_packet.raw_frame.to_vec()),
+                                ClientStreamMode::Off => unreachable!(),
+                            };
+                            if socket.send(msg).await.is_err() {
+                                break;
+                            }
                         }
                     }
                     Err(broadcast::error::RecvError::Lagged(skipped)) => {
