@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "box_stream_engine",
+      "type": "rectangle",
+      "x": 60,
+      "y": 80,
+      "width": 420,
+      "height": 280,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f615",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 3001,
+      "zIndex": 1,
+      "text": "Our Architecture (Rust + Browser AudioWorklet)\n\n• Capture: WASAPI Loopback (IAudioCaptureClient, EventSync)\n• Buffer: 20ms allocated (def_time * 2) -> 0 overruns\n• Priority: High / MMCSS thread scheduling\n• Downmix: ITU-R BS.775 (Mono, Stereo, 5.1, 7.1) with headroom\n• Protocol: 20-byte LAUD v1 binary frames\n• Transport: WebSocket + TCP_NODELAY (Nagle disabled)\n• Receiver: AudioWorklet ring buffer with ±1.5% micro-slew drift\n• Underrun: Smooth cosine edge fade, zero 135ms mute pause",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_audiorelay_arch",
+      "type": "rectangle",
+      "x": 520,
+      "y": 80,
+      "width": 420,
+      "height": 280,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b98115",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 3002,
+      "zIndex": 2,
+      "text": "AudioRelay Architecture (Reverse-Engineered via REA)\n\n• Capture: Kernel Virtual Audio Driver (Virtual Speakers)\n  + WASAPI Loopback fallback (NAudio/RtAudio)\n• Clock Keep-Alive: Plays inaudible silence stream so WASAPI never sleeps\n• Priority: Process priority elevated to High (audiorelay-backend)\n• Separation: Port 59300 (Messages) & Port 59350 (Audio Data)\n• Codec: Uncompressed PCM16 or Opus (compressed 128kbps)\n• Transport: UDP (preferred) or TCP with sequence tracking\n• Receiver: Android AudioTrack + Adaptive time-stretching jitter buffer",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_takeaways",
+      "type": "rectangle",
+      "x": 60,
+      "y": 390,
+      "width": 880,
+      "height": 130,
+      "strokeColor": "#8b5cf6",
+      "fillColor": "#8b5cf615",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 3003,
+      "zIndex": 3,
+      "text": "Key Architectural Lessons from AudioRelay Applied to Our Stream:\n\n1. Eliminating Discontinuities: Allocate 2x default buffer duration and maintain capture thread priority.\n2. Eliminating Transmission Clumping: Setting TCP_NODELAY prevents 50ms delayed-ACK packet bunching.\n3. Eliminating Playback Popping: Adaptive micro-slew rate (±1.5%) eliminates hard frame drops.\n4. Eliminating Silence Wake-up Lag: Soft cosine fade-in/out on resume without 135ms mute locking.",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

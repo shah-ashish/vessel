@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_git_push",
+      "type": "rectangle",
+      "x": 60,
+      "y": 140,
+      "width": 180,
+      "height": 80,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 301,
+      "zIndex": 1,
+      "text": "🚀 GitHub Repository\n• Git Push / Trigger\n• Clean Source Tree\n• No heavy binaries stored",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_job_android",
+      "type": "rectangle",
+      "x": 340,
+      "y": 60,
+      "width": 220,
+      "height": 90,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 302,
+      "zIndex": 1,
+      "text": "📱 Job: build-android-apk\n• Runner: ubuntu-latest\n• JDK 17 + Android SDK\n• ./gradlew assembleDebug",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_job_desktop",
+      "type": "rectangle",
+      "x": 340,
+      "y": 210,
+      "width": 220,
+      "height": 90,
+      "strokeColor": "#06b6d4",
+      "fillColor": "#06b6d41a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 303,
+      "zIndex": 1,
+      "text": "💻 Job: build-desktop-exe\n• Runner: windows-latest\n• Rust Stable Toolchain\n• cargo build --release",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_artifact_apk",
+      "type": "rectangle",
+      "x": 640,
+      "y": 60,
+      "width": 240,
+      "height": 90,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b1a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 304,
+      "zIndex": 1,
+      "text": "📦 Artifact 1: Android APK\n• LaptopAudioStream-Android-APK\n• app-debug.apk\n• Direct install on phone",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_artifact_exe",
+      "type": "rectangle",
+      "x": 640,
+      "y": 210,
+      "width": 240,
+      "height": 90,
+      "strokeColor": "#6366f1",
+      "fillColor": "#6366f11a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 305,
+      "zIndex": 1,
+      "text": "📦 Artifact 2: Desktop EXE Zip\n• LaptopAudioStream-Desktop-Windows-x64\n• laptop-audio-stream.exe + web/\n• Standalone Desktop GUI app",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_repo_to_apk",
+      "type": "arrow",
+      "x": 240,
+      "y": 160,
+      "width": 100,
+      "height": -55,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 401,
+      "zIndex": 10,
+      "text": "Android Matrix",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_git_push",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_job_android",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_repo_to_desktop",
+      "type": "arrow",
+      "x": 240,
+      "y": 190,
+      "width": 100,
+      "height": 65,
+      "strokeColor": "#06b6d4",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 402,
+      "zIndex": 10,
+      "text": "Windows Matrix",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_git_push",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_job_desktop",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_job_to_apk",
+      "type": "arrow",
+      "x": 560,
+      "y": 105,
+      "width": 80,
+      "height": 0,
+      "strokeColor": "#f59e0b",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 403,
+      "zIndex": 10,
+      "text": "Upload Artifact",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "node_job_android",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_artifact_apk",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_job_to_exe",
+      "type": "arrow",
+      "x": 560,
+      "y": 255,
+      "width": 80,
+      "height": 0,
+      "strokeColor": "#6366f1",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "routing": "straight",
+      "roughness": 0,
+      "seed": 404,
+      "zIndex": 10,
+      "text": "Upload Artifact",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "startBinding": {
+        "elementId": "node_job_desktop",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_artifact_exe",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": -20,
+    "y": -30,
+    "zoom": 0.95
+  }
+}

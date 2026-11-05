@@ -1,0 +1,77 @@
+# ====================================================================
+# Laptop Audio Stream - Git Ignore Rules
+# ====================================================================
+
+# --------------------------------------------------------------------
+# Rust & Cargo Build Artifacts
+# --------------------------------------------------------------------
+/target/
+**/*.rs.bk
+*.pdb
+
+# --------------------------------------------------------------------
+# Android & Gradle Build Artifacts
+# --------------------------------------------------------------------
+.gradle/
+build/
+**/build/
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+
+# --------------------------------------------------------------------
+# Audio Dumps, Test Captures & Temporary Files
+# --------------------------------------------------------------------
+*.wav
+*.mp3
+*.aac
+*.ogg
+*.raw
+*.pcm
+*.log
+*.zip
+*.tar.gz
+*.7z
+tmp/
+temp/
+scratch/
+
+# --------------------------------------------------------------------
+# IDEs & Editors
+# --------------------------------------------------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.sublime-project
+*.sublime-workspace
+
+# --------------------------------------------------------------------
+# Operating System Junk
+# --------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --------------------------------------------------------------------
+# Python & Node Runtime Caches
+# --------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

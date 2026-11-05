@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Laptop Audio Stream · Desktop Control Panel</title>
+  <link rel="stylesheet" href="/desktop.css">
+</head>
+<body>
+  <div class="desktop-app">
+    <!-- Window Title Bar -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-icon">🔊</div>
+        <div class="brand-text">
+          <h1>Laptop Audio Stream</h1>
+          <span class="version">v0.1.0 · Desktop Server</span>
+        </div>
+      </div>
+      <div class="status-indicator">
+        <span class="live-dot" id="live-dot"></span>
+        <span id="live-text">CAPTURING</span>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="dashboard">
+      
+      <!-- Audio Peak Level VU Meter -->
+      <section class="card meter-card">
+        <div class="card-header">
+          <span class="card-title">WASAPI Loopback Level</span>
+          <span class="card-badge" id="format-badge">48 kHz Stereo</span>
+        </div>
+        <div class="vu-meters">
+          <div class="meter-channel">
+            <span class="channel-label">L</span>
+            <div class="meter-track">
+              <div class="meter-bar" id="meter-l" style="width: 0%;"></div>
+            </div>
+            <span class="channel-val" id="val-l">-∞ dB</span>
+          </div>
+          <div class="meter-channel">
+            <span class="channel-label">R</span>
+            <div class="meter-track">
+              <div class="meter-bar" id="meter-r" style="width: 0%;"></div>
+            </div>
+            <span class="channel-val" id="val-r">-∞ dB</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Connection & Mobile Stream Info -->
+      <section class="card connect-card">
+        <div class="card-header">
+          <span class="card-title">Mobile Receiver Connection</span>
+          <span class="badge-hotspot">Wi-Fi / Hotspot</span>
+        </div>
+
+        <p class="connect-desc">Connect your phone to this laptop's Wi-Fi or Hotspot to stream audio:</p>
+
+        <div class="ip-box">
+          <div class="ip-address" id="server-url">http://10.221.155.222:8080</div>
+          <button class="btn-copy" id="btn-copy" title="Copy URL">📋 Copy</button>
+        </div>
+
+        <div class="qr-container">
+          <canvas id="qr-canvas" width="140" height="140"></canvas>
+          <div class="qr-hint">Scan with phone camera to connect immediately</div>
+        </div>
+      </section>
+
+      <!-- Streaming Telemetry Summary -->
+      <section class="card telemetry-card">
+        <div class="stat-item">
+          <span class="stat-num" id="client-count">0</span>
+          <span class="stat-name">Active Clients</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="protocol-name">LAUD v1</span>
+          <span class="stat-name">Protocol</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="buffer-size">20 ms</span>
+          <span class="stat-name">Buffer Period</span>
+        </div>
+      </section>
+
+      <!-- Quick Action Buttons -->
+      <div class="actions">
+        <button class="btn-primary" id="btn-open-browser">🌐 Open Browser Receiver</button>
+        <button class="btn-secondary" id="btn-restart">🔄 Refresh Status</button>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>Auto-discovery active on UDP port 8082</span>
+    </footer>
+  </div>
+
+  <script src="/desktop.js"></script>
+</body>
+</html>

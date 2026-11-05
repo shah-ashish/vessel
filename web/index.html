@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Laptop Audio Stream · Reference Receiver</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="panel">
+    <div class="eyebrow">LOCAL NETWORK AUDIO · REFERENCE RECEIVER</div>
+    <h1>Laptop Audio Stream</h1>
+    <p class="sub">Continuous low-latency streaming with AudioWorklet & Jitter Buffer.</p>
+
+    <div class="status-row">
+      <span id="dot" class="dot"></span>
+      <span id="status">Not connected</span>
+      <span id="format" class="format">48 kHz · Stereo · PCM16</span>
+    </div>
+
+    <div id="resume-banner" class="resume-banner hidden">
+      ⚠️ AudioContext was suspended by browser. <button id="resume-btn" class="resume-btn">Click to Resume</button>
+    </div>
+
+    <div class="visualizer" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Telemetry & Diagnostic Grid -->
+    <div class="telemetry-grid">
+      <div class="telemetry-card">
+        <div class="telemetry-label">Protocol Mode</div>
+        <div id="stat-proto" class="telemetry-value highlight">LAUD v1</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Jitter Buffer Depth</div>
+        <div id="stat-buffer" class="telemetry-value">0 ms</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Packets Received</div>
+        <div id="stat-packets" class="telemetry-value">0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Last Sequence</div>
+        <div id="stat-seq" class="telemetry-value">#0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Dropped / Missing</div>
+        <div id="stat-lost" class="telemetry-value ok">0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Buffer Underruns</div>
+        <div id="stat-underruns" class="telemetry-value ok">0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Reconnections</div>
+        <div id="stat-reconnects" class="telemetry-value">0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="telemetry-label">Audio Context</div>
+        <div id="stat-ctx" class="telemetry-value">idle</div>
+      </div>
+    </div>
+
+    <!-- Configuration Options -->
+    <div class="config-row">
+      <div class="config-item">
+        <label for="proto-select">Protocol:</label>
+        <select id="proto-select">
+          <option value="LAUD" selected>LAUD v1 (20-byte Framed)</option>
+          <option value="RAW">Legacy Raw PCM16</option>
+        </select>
+      </div>
+      <div class="config-item">
+        <label for="buffer-target">Target Buffer:</label>
+        <select id="buffer-target">
+          <option value="100">100 ms (Low Latency)</option>
+          <option value="135" selected>135 ms (Balanced)</option>
+          <option value="180">180 ms (High Jitter)</option>
+          <option value="250">250 ms (Conservative)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="listen" class="primary">▶ Listen</button>
+      <button id="stop" class="secondary" disabled>■ Stop listening</button>
+    </div>
+    <p id="detail" class="detail">Press Listen to connect to the Rust server.</p>
+    <p class="foot">Audio is streamed over local WebSocket. Jitter buffer smooths Wi-Fi packet delivery.</p>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "box_discovery",
+      "type": "rectangle",
+      "x": 60,
+      "y": 80,
+      "width": 300,
+      "height": 220,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b15",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 6001,
+      "zIndex": 1,
+      "text": "1. Automatic Device Discovery\n\n• Hotspot Gateway Auto-Detection\n  (Reads Android DhcpInfo.gateway)\n• UDP Broadcast Ping on Port 8080/8082\n• Auto-Discovered Device Card:\n  'Windows Laptop (10.221.155.222)'\n• One-click auto-connect",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_ui_front",
+      "type": "rectangle",
+      "x": 420,
+      "y": 80,
+      "width": 300,
+      "height": 220,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f615",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 6002,
+      "zIndex": 2,
+      "text": "2. Minimalist Front Screen\n\n• Large Central Speaker Icon\n  - Tapping turns Audio ON / OFF\n  - Animated wave pulsing when live\n• Clean Status Text:\n  'Tap to Listen' / 'Connected'\n• No complex numbers or jitter charts\n• (Advanced stats kept hidden for later)",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_background_service",
+      "type": "rectangle",
+      "x": 780,
+      "y": 80,
+      "width": 300,
+      "height": 220,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b98115",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 6003,
+      "zIndex": 3,
+      "text": "3. Foreground Streaming Engine\n\n• AudioPlaybackService (Foreground)\n• WAKELOCK + WIFI_LOCK\n• Persistent Notification Controls\n• AudioTrack in MODE_STREAM (48kHz)\n• OkHttp WebSocket with Auto-Reconnect\n• Rock-solid background playback",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_disc_to_ui",
+      "type": "arrow",
+      "x": 360,
+      "y": 190,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#94a3b8",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 7001,
+      "zIndex": 10,
+      "text": "Found Device",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "box_discovery",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "box_ui_front",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_ui_to_service",
+      "type": "arrow",
+      "x": 720,
+      "y": 190,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#94a3b8",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 7002,
+      "zIndex": 11,
+      "text": "Tap Speaker",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "box_ui_front",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "box_background_service",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

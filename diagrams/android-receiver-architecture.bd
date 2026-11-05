@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "box_ui",
+      "type": "rectangle",
+      "x": 60,
+      "y": 80,
+      "width": 240,
+      "height": 180,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f615",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 4001,
+      "zIndex": 1,
+      "text": "Jetpack Compose UI\n(MainActivity)\n\n• Server IP / Port Input\n• Connect / Disconnect Buttons\n• Target Jitter Buffer Slider (135ms)\n• Live Telemetry Dashboard\n  (Packets, Lost, Underruns, Buffer)",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_service",
+      "type": "rectangle",
+      "x": 360,
+      "y": 80,
+      "width": 280,
+      "height": 180,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b98115",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 4002,
+      "zIndex": 2,
+      "text": "Foreground Playback Service\n(AudioPlaybackService)\n\n• Android Foreground Media Service\n• Sticky Notification with Controls\n• PARTIAL_WAKE_LOCK & WIFI_LOCK\n• Survives backgrounding & screen off\n• Zero OS sleep interruptions",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_network",
+      "type": "rectangle",
+      "x": 700,
+      "y": 80,
+      "width": 260,
+      "height": 180,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b15",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 4003,
+      "zIndex": 3,
+      "text": "OkHttp WebSocket Client\n(StreamClient)\n\n• Connects to ws://<IP>:8080/ws\n• Negotiates START:LAUD\n• Auto-reconnect (exponential backoff)\n• Validates 20-byte LAUD v1 header\n• Sequence & Gap Tracking",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_jitter",
+      "type": "rectangle",
+      "x": 360,
+      "y": 320,
+      "width": 280,
+      "height": 170,
+      "strokeColor": "#8b5cf6",
+      "fillColor": "#8b5cf615",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 4004,
+      "zIndex": 4,
+      "text": "Adaptive Jitter Buffer\n(AudioJitterBuffer)\n\n• Thread-safe ring buffer (48,000 frames)\n• Target pre-roll (135 ms)\n• Adaptive micro-slew drift rate (±1.5%)\n• Smooth edge fade-in / fade-out\n• Prevents buffer bloat & pops",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "box_audiotrack",
+      "type": "rectangle",
+      "x": 60,
+      "y": 320,
+      "width": 240,
+      "height": 170,
+      "strokeColor": "#ec4899",
+      "fillColor": "#ec489915",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 4005,
+      "zIndex": 5,
+      "text": "AudioTrack Streaming Engine\n(AudioTrackPlayer)\n\n• AudioTrack in MODE_STREAM\n• 48,000 Hz, Stereo, PCM16\n• USAGE_MEDIA / FLAG_LOW_LATENCY\n• Dedicated high-priority audio thread\n• Continuous hardware feeding",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_ui_to_service",
+      "type": "arrow",
+      "x": 300,
+      "y": 170,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#94a3b8",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 5001,
+      "zIndex": 10,
+      "text": "bind / start",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "box_ui",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "box_service",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_service_to_net",
+      "type": "arrow",
+      "x": 640,
+      "y": 170,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#94a3b8",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 5002,
+      "zIndex": 11,
+      "text": "connect",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "box_service",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "box_network",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_net_to_jitter",
+      "type": "arrow",
+      "x": 830,
+      "y": 260,
+      "width": 0,
+      "height": 145,
+      "strokeColor": "#94a3b8",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 5003,
+      "zIndex": 12,
+      "text": "push PCM16",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "box_network",
+        "port": "bottom"
+      },
+      "endBinding": {
+        "elementId": "box_jitter",
+        "port": "right"
+      }
+    },
+    {
+      "id": "arrow_jitter_to_track",
+      "type": "arrow",
+      "x": 360,
+      "y": 405,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#94a3b8",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 5004,
+      "zIndex": 13,
+      "text": "read frames",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "box_jitter",
+        "port": "left"
+      },
+      "endBinding": {
+        "elementId": "box_audiotrack",
+        "port": "right"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}
