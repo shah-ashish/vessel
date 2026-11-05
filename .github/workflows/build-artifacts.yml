@@ -23,12 +23,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+          cache: 'gradle'
 
       - name: Grant Execute Permission to Gradle
-        run: chmod +x ./android/gradlew || true
+        run: chmod +x ./android/gradlew
 
       - name: Build Debug APK with Gradle
         run: |
