@@ -42,10 +42,10 @@ jobs:
           if-no-files-found: error
 
   # -------------------------------------------------------------
-  # 2. Windows Desktop EXE Build Job
+  # 2. Windows Desktop NSIS Installer Build Job
   # -------------------------------------------------------------
   build-desktop-exe:
-    name: Build Windows Desktop App (.exe)
+    name: Build Windows Desktop App (NSIS Installer)
     runs-on: windows-latest
     steps:
       - name: Checkout Source Code
@@ -57,17 +57,12 @@ jobs:
       - name: Build Desktop Executable (Release)
         run: cargo build --release
 
-      - name: Package Desktop Distribution
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path dist-desktop -Force
-          Copy-Item "target/release/laptop-audio-stream.exe" "dist-desktop/" -Force
-          Copy-Item -Path "web" -Destination "dist-desktop/web" -Recurse -Force
-          Compress-Archive -Path "dist-desktop/*" -DestinationPath "LaptopAudioStream-Desktop-Windows-x64.zip" -Force
+      - name: Compile NSIS Windows Installer (.exe)
+        run: makensis installer.nsi
 
-      - name: Upload Desktop Windows Executable Artifact
+      - name: Upload NSIS Installer Setup Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LaptopAudioStream-Desktop-Windows-x64
-          path: LaptopAudioStream-Desktop-Windows-x64.zip
+          name: Vessel-Windows-Setup-Installer
+          path: Vessel-Setup-x64.exe
           if-no-files-found: error

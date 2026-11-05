@@ -159,17 +159,20 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 
 .channel-label {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-dim);
-  width: 14px;
+  width: 16px;
+  flex-shrink: 0;
 }
 
 .meter-track {
   flex: 1;
+  min-width: 0;
   height: 10px;
   background: #0B111E;
   border-radius: 5px;
@@ -182,15 +185,20 @@ body {
   width: 0%;
   background: linear-gradient(90deg, #10B981 0%, #10B981 70%, #F59E0B 85%, #EF4444 100%);
   border-radius: 4px;
-  transition: width 0.08s ease-out;
+  transition: width 0.08s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: width;
 }
 
 .channel-val {
   font-size: 11px;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
-  width: 45px;
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
   text-align: right;
+  flex-shrink: 0;
 }
 
 /* Connection Box */

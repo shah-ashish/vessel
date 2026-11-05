@@ -81,6 +81,9 @@
     fetchStatus();
   });
 
+  let smoothL = 0;
+  let smoothR = 0;
+
   function amplitudeToDb(amp) {
     if (amp <= 0.0001) return -48;
     const db = 20 * Math.log10(amp);
@@ -92,7 +95,7 @@
     return Math.round(((db + 48) / 48) * 100);
   }
 
-  // Poll server telemetry every 80ms for responsive VU meter
+  // Poll server telemetry every 80ms for responsive, silky-smooth VU meter
   async function fetchStatus() {
     try {
       const res = await fetch('/api/status');
@@ -111,12 +114,15 @@
         clientCountEl.textContent = data.clients;
       }
 
-      // Update VU meter
-      const peakL = data.peak_left || 0;
-      const peakR = data.peak_right || 0;
+      // Smooth VU ballistics: instant attack, gentle decay
+      const rawL = data.peak_left || 0;
+      const rawR = data.peak_right || 0;
 
-      const dbL = amplitudeToDb(peakL);
-      const dbR = amplitudeToDb(peakR);
+      smoothL = rawL > smoothL ? rawL : Math.max(0, smoothL * 0.82);
+      smoothR = rawR > smoothR ? rawR : Math.max(0, smoothR * 0.82);
+
+      const dbL = amplitudeToDb(smoothL);
+      const dbR = amplitudeToDb(smoothR);
 
       const pctL = dbToPercent(dbL);
       const pctR = dbToPercent(dbR);
@@ -124,8 +130,8 @@
       meterL.style.width = pctL + "%";
       meterR.style.width = pctR + "%";
 
-      valL.textContent = dbL <= -47 ? "-∞ dB" : `${dbL.toFixed(1)} dB`;
-      valR.textContent = dbR <= -47 ? "-∞ dB" : `${dbR.toFixed(1)} dB`;
+      valL.textContent = dbL <= -47.0 ? "-∞ dB" : `${dbL.toFixed(1)} dB`;
+      valR.textContent = dbR <= -47.0 ? "-∞ dB" : `${dbR.toFixed(1)} dB`;
 
     } catch (_) {
       // Server temporarily unreachable

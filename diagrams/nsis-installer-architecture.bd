@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_cargo_build",
+      "type": "rectangle",
+      "x": 60,
+      "y": 140,
+      "width": 200,
+      "height": 80,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 501,
+      "zIndex": 1,
+      "text": "🦀 cargo build --release\n• No black console window\n• WASAPI loopback capture\n• Inlined GUI & Web Server",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_nsis_compiler",
+      "type": "rectangle",
+      "x": 340,
+      "y": 140,
+      "width": 220,
+      "height": 80,
+      "strokeColor": "#06b6d4",
+      "fillColor": "#06b6d41a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 502,
+      "zIndex": 1,
+      "text": "📦 NSIS Compiler (makensis)\n• Bundles exe + UI assets\n• Compresses with LZMA\n• Embedded uninstall routines",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_single_artifact",
+      "type": "rectangle",
+      "x": 640,
+      "y": 140,
+      "width": 220,
+      "height": 80,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 503,
+      "zIndex": 1,
+      "text": "💿 Vessel-Setup-x64.exe\n• Single standalone installer\n• No loose zip or web folders\n• Clean single file artifact",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_installed_app",
+      "type": "rectangle",
+      "x": 930,
+      "y": 140,
+      "width": 210,
+      "height": 80,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b1a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 504,
+      "zIndex": 1,
+      "text": "🖥️ Installed System App\n• Path: C:\\Program Files\\Vessel\n• Start Menu & Desktop Icon\n• Registered in Settings Apps",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_build_to_nsis",
+      "type": "arrow",
+      "x": 260,
+      "y": 180,
+      "width": 80,
+      "height": 0,
+      "strokeColor": "#3b82f6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 601,
+      "zIndex": 10,
+      "text": "Binary",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "node_cargo_build",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_nsis_compiler",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_nsis_to_artifact",
+      "type": "arrow",
+      "x": 560,
+      "y": 180,
+      "width": 80,
+      "height": 0,
+      "strokeColor": "#06b6d4",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 602,
+      "zIndex": 10,
+      "text": "1 Setup Exe",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "node_nsis_compiler",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_single_artifact",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_artifact_to_install",
+      "type": "arrow",
+      "x": 860,
+      "y": 180,
+      "width": 70,
+      "height": 0,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 603,
+      "zIndex": 10,
+      "text": "1-Click Setup",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "straight",
+      "startBinding": {
+        "elementId": "node_single_artifact",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_installed_app",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": -20,
+    "y": -30,
+    "zoom": 0.95
+  }
+}
