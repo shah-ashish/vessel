@@ -57,8 +57,8 @@ jobs:
       - name: Build Desktop Executable (Release)
         run: cargo build --release
 
-      - name: Add NSIS to PATH
-        run: echo "C:\Program Files (x86)\NSIS" >> $env:GITHUB_PATH
+      - name: Set up NSIS
+        uses: nsis-dev/setup-nsis@v1
 
       - name: Compile NSIS Windows Installer (.exe)
         run: makensis installer.nsi
