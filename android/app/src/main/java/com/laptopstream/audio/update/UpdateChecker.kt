@@ -83,7 +83,7 @@ class UpdateChecker(private val context: Context) {
 
                 val expected = checksumsFile.readLines()
                     .firstOrNull { it.trim().endsWith(update.apkName) }
-                    ?.trim()?.substringBefore(Regex("\\s+"))
+                    ?.trim()?.split(Regex("\\s+"))?.firstOrNull()
                     ?: throw IllegalStateException("No checksum for ${update.apkName}")
                 val actual = sha256(apkFile)
                 require(expected.equals(actual, ignoreCase = true)) { "APK checksum verification failed" }
