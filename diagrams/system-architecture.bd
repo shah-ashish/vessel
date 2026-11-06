@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "i07Ala7iOrZas2eYLk2dm",
+      "type": "text",
+      "x": -86,
+      "y": -271,
+      "width": 200,
+      "height": 45,
+      "strokeColor": "#1e1e1e",
+      "fillColor": "#ffffff",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 1566335,
+      "zIndex": 0,
+      "text": "vessel",
+      "fontSize": 18,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "disableConnectors": true
+    }
+  ],
+  "camera": {
+    "x": 268,
+    "y": 408,
+    "zoom": 1
+  }
+}

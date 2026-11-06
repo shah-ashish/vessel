@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_win11",
+      "type": "rectangle",
+      "x": 60,
+      "y": 60,
+      "width": 280,
+      "height": 160,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 301,
+      "zIndex": 1,
+      "text": "🏆 Windows 11 (22H2 / 23H2 / 24H2)\n★ BEST PERFORMANCE (Tier 1)\n\n• End-to-End Latency: 12 - 20 ms\n• Intel/AMD P-Core Thread Scheduling\n• NDIS 6.8+ Low-Jitter Mobile Hotspot\n• 48 kHz Native Hardware Loopback Graph\n• 0.5ms MMCSS Multimedia Timer Precision",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_win10",
+      "type": "rectangle",
+      "x": 390,
+      "y": 60,
+      "width": 280,
+      "height": 160,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 302,
+      "zIndex": 1,
+      "text": "🥈 Windows 10 (2004 - 22H2)\n★ GOOD & STABLE (Tier 2)\n\n• End-to-End Latency: 25 - 35 ms\n• Standard Core Load-Balancing\n• Standard NDIS 6.6 Wi-Fi Hotspot Stack\n• Reliable WASAPI Loopback Capture\n• 1.0ms System Timer Resolution",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_win7_8",
+      "type": "rectangle",
+      "x": 720,
+      "y": 60,
+      "width": 280,
+      "height": 160,
+      "strokeColor": "#ef4444",
+      "fillColor": "#ef44441a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 303,
+      "zIndex": 1,
+      "text": "❌ Windows 7 / 8.1\n★ NOT RECOMMENDED (Legacy)\n\n• End-to-End Latency: 60 - 120 ms+\n• Frequent WASAPI Loopback Clock Drift\n• High Packet Jitter on Hosted Networks\n• Missing Modern TCP BBR & Socket APIs\n• Coarse 15.6ms Default Scheduler Tick",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_benchmarks",
+      "type": "rectangle",
+      "x": 220,
+      "y": 270,
+      "width": 620,
+      "height": 140,
+      "strokeColor": "#8b5cf6",
+      "fillColor": "#8b5cf61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 304,
+      "zIndex": 1,
+      "text": "📊 How to Benchmark & Identify on Any Laptop:\n\n1. WASAPI Glitch Count: Zero packet drops in WASAPI buffer queue\n2. Wi-Fi Hotspot Ping Jitter: ping <phone_ip> -t  →  Under 3ms = Tier 1\n3. Scheduler Tick: timeBeginPeriod(1) resolution in Task Manager / Performance\n4. CPU Affinity: Tokio worker pinned to Performance Cores vs Efficiency Cores",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_win11_to_bench",
+      "type": "arrow",
+      "x": 200,
+      "y": 220,
+      "width": 140,
+      "height": 50,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 401,
+      "zIndex": 10,
+      "text": "Optimal Score",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_win11",
+        "port": "bottom"
+      },
+      "endBinding": {
+        "elementId": "node_benchmarks",
+        "port": "top"
+      }
+    },
+    {
+      "id": "arrow_win10_to_bench",
+      "type": "arrow",
+      "x": 530,
+      "y": 220,
+      "width": 0,
+      "height": 50,
+      "strokeColor": "#3b82f6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 402,
+      "zIndex": 10,
+      "text": "Acceptable Score",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_win10",
+        "port": "bottom"
+      },
+      "endBinding": {
+        "elementId": "node_benchmarks",
+        "port": "top"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

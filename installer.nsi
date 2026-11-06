@@ -38,11 +38,11 @@ RequestExecutionLevel admin
 Section "Vessel (required)" SecCore
   SectionIn RO
 
+  ; Target all users for desktop and start menu shortcuts
+  SetShellVarContext all
+
   SetOutPath "$INSTDIR"
   File "target\release\laptop-audio-stream.exe"
-  
-  SetOutPath "$INSTDIR\web"
-  File /r "web\*.*"
 
   ; Registry key for install location
   WriteRegStr HKLM "Software\Vessel" "Install_Dir" "$INSTDIR"
@@ -69,6 +69,8 @@ SectionEnd
 ; Uninstaller Section
 ; --------------------------------------------------------------------
 Section "Uninstall"
+  SetShellVarContext all
+
   Delete "$DESKTOP\Vessel.lnk"
   Delete "$SMPROGRAMS\Vessel\Vessel.lnk"
   Delete "$SMPROGRAMS\Vessel\Uninstall Vessel.lnk"
@@ -76,7 +78,6 @@ Section "Uninstall"
 
   Delete "$INSTDIR\laptop-audio-stream.exe"
   Delete "$INSTDIR\uninstall.exe"
-  RMDir /r "$INSTDIR\web"
   RMDir "$INSTDIR"
 
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel"

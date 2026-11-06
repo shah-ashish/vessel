@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_phone_inputs",
+      "type": "rectangle",
+      "x": 60,
+      "y": 60,
+      "width": 260,
+      "height": 380,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 501,
+      "zIndex": 1,
+      "text": "📱 Android Phone\n(Sensors & Controls)\n\n🖱️ Trackpad & Gestures\n(Touch coordinates, scrolls, clicks)\n\n⌨️ Virtual Keyboard\n(Unicode chars, Hotkeys, Fn keys)\n\n🎙️ Microphone (AudioRecord)\n(48 kHz Opus / PCM Uplink)\n\n📷 Camera (CameraX)\n(H.264 / NV12 Video Frames)\n\n🔊 Speaker (AudioTrack)\n(Existing WASAPI Downlink)",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_network_layer",
+      "type": "rectangle",
+      "x": 390,
+      "y": 170,
+      "width": 200,
+      "height": 160,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b1a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 502,
+      "zIndex": 1,
+      "text": "⚡ Vessel Multi-Channel Net\n(Wi-Fi Hotspot / UDP & WS)\n\n• Audio Downlink: UDP/WS (:8080)\n• Input Uplink: Low-overhead UDP\n• Mic Uplink: 48 kHz Opus stream\n• Video Uplink: RTP / WebRTC",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_windows_subsystems",
+      "type": "rectangle",
+      "x": 660,
+      "y": 60,
+      "width": 320,
+      "height": 380,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 503,
+      "zIndex": 1,
+      "text": "🪟 Windows 11 Native APIs\n(Target Subsystems)\n\n🖱️ Keyboard & Mouse:\nWin32 SendInput API (user32.dll)\n• Zero drivers needed, sub-ms cursor movement\n\n🎙️ Microphone Input:\nWDM Virtual Audio Driver / SysVAD\n• Exposes 'Vessel Mic' to Zoom, Discord, Games\n\n📷 Webcam Input:\nWindows Media Foundation (IMFVirtualCamera)\n• Native Win 10/11 virtual camera (No OBS needed)\n\n🔊 Speaker Capture:\nWASAPI Loopback Capture (Current Engine)",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_phone_to_net",
+      "type": "arrow",
+      "x": 320,
+      "y": 250,
+      "width": 70,
+      "height": 0,
+      "strokeColor": "#3b82f6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 601,
+      "zIndex": 10,
+      "text": "Uplink Data",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_phone_inputs",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_network_layer",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_net_to_win",
+      "type": "arrow",
+      "x": 590,
+      "y": 250,
+      "width": 70,
+      "height": 0,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 602,
+      "zIndex": 10,
+      "text": "Dispatch to OS",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_network_layer",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_windows_subsystems",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

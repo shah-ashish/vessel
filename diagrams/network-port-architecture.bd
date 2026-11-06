@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_bad_multiport",
+      "type": "rectangle",
+      "x": 60,
+      "y": 60,
+      "width": 300,
+      "height": 220,
+      "strokeColor": "#ef4444",
+      "fillColor": "#ef44441a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 701,
+      "zIndex": 1,
+      "text": "❌ Multiple Ports Anti-Pattern\n(Port 8080, 8081, 8082, 8083, 8084)\n\n• Windows Firewall asks permission 5 times\n• Auto-discovery beacon must sync 5 ports\n• Strict Wi-Fi / Hotspots block unlisted ports\n• Hard to maintain and debug",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_good_singleport",
+      "type": "rectangle",
+      "x": 440,
+      "y": 60,
+      "width": 340,
+      "height": 220,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 702,
+      "zIndex": 1,
+      "text": "🏆 Recommended: Single Port with Paths\n(Unified Port 8080)\n\n• /ws/speaker → Laptop Audio Downlink\n• /ws/mic     → Phone Mic Uplink\n• /ws/input   → Trackpad & Keyboard Events\n• /ws/camera  → H.264 Video Stream\n• /api/info   → Handshake & Discovery",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_advantages",
+      "type": "rectangle",
+      "x": 180,
+      "y": 320,
+      "width": 500,
+      "height": 130,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 703,
+      "zIndex": 1,
+      "text": "⚡ Why Single Port with Paths Wins:\n\n1. Single Windows Firewall Prompt: User clicks 'Allow' once\n2. 1-Click Auto-Discovery: UDP beacon broadcasts single port (8080)\n3. Independent Sockets: Each path opens its own WebSocket\n   (Heavy camera frames never lag the mouse cursor!)",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_single_to_adv",
+      "type": "arrow",
+      "x": 610,
+      "y": 280,
+      "width": -150,
+      "height": 40,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 801,
+      "zIndex": 10,
+      "text": "Production Architecture",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_good_singleport",
+        "port": "bottom"
+      },
+      "endBinding": {
+        "elementId": "node_advantages",
+        "port": "top"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

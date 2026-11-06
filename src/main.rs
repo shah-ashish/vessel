@@ -21,7 +21,6 @@ use std::{
     time::Duration,
 };
 use tokio::sync::broadcast;
-use tower_http::services::ServeDir;
 use tracing::{error, info, warn};
 
 pub mod audio;
@@ -143,7 +142,6 @@ async fn main() -> Result<()> {
         .route("/ws", get(websocket_handler))
         .route("/api/info", get(api_info_handler))
         .route("/api/status", get(api_status_handler))
-        .nest_service("/", ServeDir::new("web"))
         .with_state(state.clone());
 
     let local_ip = get_local_ip().unwrap_or_else(|| "127.0.0.1".to_string());
