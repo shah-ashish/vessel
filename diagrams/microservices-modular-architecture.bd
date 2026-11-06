@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_android_app",
+      "type": "rectangle",
+      "x": 60,
+      "y": 60,
+      "width": 260,
+      "height": 360,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 901,
+      "zIndex": 1,
+      "text": "📱 Android APK (Client Features)\n\n📦 features/speaker/\n• AudioTrack & Jitter Buffer\n• Channel: /ws/speaker\n\n📦 features/input/\n• Touchpad UI & Gestures\n• Channel: /ws/input\n\n📦 features/mic/ (Future)\n• AudioRecord 48kHz Opus\n• Channel: /ws/mic\n\n📦 features/camera/ (Future)\n• CameraX H.264 Encoder\n• Channel: /ws/camera",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_channel_bus",
+      "type": "rectangle",
+      "x": 380,
+      "y": 140,
+      "width": 220,
+      "height": 200,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b1a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 902,
+      "zIndex": 1,
+      "text": "⚡ Independent Channel Bus\n(Port 8080 Multi-Path)\n\n• /ws/speaker (Audio Downlink)\n• /ws/input   (Input Uplink)\n• /ws/mic     (Mic Uplink)\n• /ws/camera  (Video Uplink)\n\n* Isolated Network Queues\n* Zero Head-of-Line Blocking",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_desktop_services",
+      "type": "rectangle",
+      "x": 660,
+      "y": 60,
+      "width": 300,
+      "height": 360,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 903,
+      "zIndex": 1,
+      "text": "🦀 Desktop Engine (Independent Services)\n\n📦 services/speaker/\n• WASAPI Loopback + LAUD v1\n• Independent Tokio Worker Task\n\n📦 services/input/\n• Win32 SendInput Handler\n• Zero-dependency cursor injection\n\n📦 services/mic/ (Future)\n• Virtual Audio Cable feeder\n\n📦 services/camera/ (Future)\n• IMFVirtualCamera frame injector",
+      "fontSize": 12,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "arrow_apk_to_bus",
+      "type": "arrow",
+      "x": 320,
+      "y": 240,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#3b82f6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 904,
+      "zIndex": 10,
+      "text": "Feature Channels",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_android_app",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_channel_bus",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_bus_to_services",
+      "type": "arrow",
+      "x": 600,
+      "y": 240,
+      "width": 60,
+      "height": 0,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 905,
+      "zIndex": 10,
+      "text": "Direct Service Dispatch",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_channel_bus",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_desktop_services",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

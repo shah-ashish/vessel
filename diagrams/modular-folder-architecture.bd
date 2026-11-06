@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "app": "drawboard",
+  "elements": [
+    {
+      "id": "node_desktop_tree",
+      "type": "rectangle",
+      "x": 40,
+      "y": 40,
+      "width": 380,
+      "height": 460,
+      "strokeColor": "#10b981",
+      "fillColor": "#10b9811a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 1001,
+      "zIndex": 1,
+      "text": "🦀 DESKTOP (Rust Modular Architecture)\n\n📂 src/core/\n  • config.rs (CLI & Runtime settings)\n  • state.rs (Global App Coordinator)\n\n📂 src/connection/ (Control Plane Gateway)\n  • session.rs (1-Device-at-a-time Lease Lock)\n  • discovery.rs (UDP Beacon :8082)\n  • router.rs (Axum Route & Gatekeeper)\n  • heartbeat.rs (1s Ping/Pong Keepalive)\n\n📂 src/services/speaker/ (Independent Data Plane)\n  • mod.rs (Lifecycle & Broadcast Bus)\n  • capture.rs (WASAPI Loopback Capture)\n  • downmix.rs & resample.rs (48 kHz PCM)\n  • protocol.rs (20-byte LAUD v1 Framing)\n  • handler.rs (/ws/speaker WebSocket Sink)\n\n📂 src/gui/ (Native Win32 UI Layer)\n  • window.rs (HWND, Win32 Controls)\n  • views/vu_meter.rs (GDI Stereo Meters)\n  • state_bridge.rs (Reactive State Observer)",
+      "fontSize": 11,
+      "fontFamily": "Consolas, monospace",
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "node_network_bridge",
+      "type": "rectangle",
+      "x": 460,
+      "y": 180,
+      "width": 200,
+      "height": 180,
+      "strokeColor": "#f59e0b",
+      "fillColor": "#f59e0b1a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 1002,
+      "zIndex": 1,
+      "text": "⚡ DECOUPLED CONTRACTS\n\n1. UDP Discovery (:8082)\n   LAUD_DISCOVER ⟷ LAUD_HERE\n\n2. Session Gatekeeper (:8080)\n   Single-Device Lease Token\n\n3. Dedicated Speaker Stream\n   /ws/speaker\n   (Zero cross-talk with input/ui)",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "node_android_tree",
+      "type": "rectangle",
+      "x": 700,
+      "y": 40,
+      "width": 380,
+      "height": 460,
+      "strokeColor": "#3b82f6",
+      "fillColor": "#3b82f61a",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "seed": 1003,
+      "zIndex": 1,
+      "text": "📱 MOBILE (Android Kotlin Feature Modules)\n\n📂 com.vessel.core/\n  • model/ (ConnectionState, DeviceInfo)\n  • di/ (Service Locator / State Singleton)\n\n📂 com.vessel.connection/ (Client Session)\n  • DiscoveryClient.kt (Hotspot UDP Broadcaster)\n  • ConnectionManager.kt (Session Handshake)\n  • HeartbeatMonitor.kt (Drop Detection)\n\n📂 com.vessel.features.speaker/ (Self-Contained)\n  • SpeakerManager.kt (Audio Lifecycle)\n  • AudioWebSocket.kt (Client for /ws/speaker)\n  • LaudParser.kt (Header & CRC Validator)\n  • JitterBuffer.kt (Adaptive Micro-Slew)\n  • AudioPlayer.kt (AudioTrack 48kHz Stereo)\n\n📂 com.vessel.ui/ (Reactive MVVM UI Layer)\n  • MainActivity.kt (Clean Single-Screen Host)\n  • MainViewModel.kt (StateFlow Observables)\n  • components/ (Pulsing Button & Drawer)",
+      "fontSize": 11,
+      "fontFamily": "Consolas, monospace",
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "arrow_desktop_to_bridge",
+      "type": "arrow",
+      "x": 420,
+      "y": 270,
+      "width": 40,
+      "height": 0,
+      "strokeColor": "#10b981",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 1004,
+      "zIndex": 10,
+      "text": "Exposes",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_desktop_tree",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_network_bridge",
+        "port": "left"
+      }
+    },
+    {
+      "id": "arrow_bridge_to_android",
+      "type": "arrow",
+      "x": 660,
+      "y": 270,
+      "width": 40,
+      "height": 0,
+      "strokeColor": "#3b82f6",
+      "fillColor": "transparent",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 1005,
+      "zIndex": 10,
+      "text": "Consumes",
+      "fontSize": 11,
+      "fontFamily": "Inter, sans-serif",
+      "routing": "curved",
+      "startBinding": {
+        "elementId": "node_network_bridge",
+        "port": "right"
+      },
+      "endBinding": {
+        "elementId": "node_android_tree",
+        "port": "left"
+      }
+    }
+  ],
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}
