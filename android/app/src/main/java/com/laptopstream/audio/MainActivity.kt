@@ -108,15 +108,16 @@ class MainActivity : ComponentActivity() {
                 onRescan = { startDiscovery() }
             )
 
-            if (showUpdate && update != null) {
+            val availableUpdate = update
+            if (showUpdate && availableUpdate != null) {
                 AlertDialog(
                     onDismissRequest = { showUpdateDialog.value = false },
                     title = { Text("Vessel update available") },
-                    text = { Text("Version ${update.version}\n\n${update.notes}") },
+                    text = { Text("Version ${availableUpdate.version}\n\n${availableUpdate.notes}") },
                     confirmButton = {
                         Button(onClick = {
                             showUpdateDialog.value = false
-                            UpdateChecker(this@MainActivity).downloadAndInstall(update)
+                            UpdateChecker(this@MainActivity).downloadAndInstall(availableUpdate)
                         }) { Text("Download and install") }
                     },
                     dismissButton = {
