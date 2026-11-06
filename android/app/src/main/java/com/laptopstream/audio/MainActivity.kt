@@ -12,14 +12,21 @@ import android.os.IBinder
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.laptopstream.audio.connection.DeviceControlClient
 import com.laptopstream.audio.connection.DeviceDiscoveryManager
 import com.laptopstream.audio.connection.DiscoveredDevice
 import com.laptopstream.audio.connection.StreamClient.ConnectionState
 import com.laptopstream.audio.features.speaker.AudioPlaybackService
 import com.laptopstream.audio.ui.MainScreen
+import com.laptopstream.audio.update.UpdateChecker
+import com.laptopstream.audio.update.VesselUpdate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -27,158 +34,206 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private lateinit var discoveryManager: DeviceDiscoveryManager
+    private lateinit var controlClient: DeviceControlClient
     private var playbackService: AudioPlaybackService? = null
     private var isBound = false
 
-    private val connectionState = mutableStateOf(ConnectionState.DISCONNECTED)
-    private val statusMessage = mutableStateOf("Ready to listen")
-    private val discoveredDevice = mutableStateOf<DiscoveredDevice?>(null)
+    private val receiverState = mutableStateOf(ConnectionState.DISCONNECTED)
+    private val speakerState = mutableStateOf(ConnectionState.DISCONNECTED)
+    private val statusMessage = mutableStateOf("Searching for Vessel servers...")
+    private val discoveredDevices = mutableStateOf<List<DiscoveredDevice>>(emptyList())
+    private val selectedDevice = mutableStateOf<DiscoveredDevice?>(null)
     private val isScanning = mutableStateOf(false)
-    private val bufferDepthMs = mutableStateOf(0f)
-    private val lostPackets = mutableStateOf(0L)
-    private val underruns = mutableStateOf(0)
+    private val pendingUpdate = mutableStateOf<VesselUpdate?>(null)
+    private val showUpdateDialog = mutableStateOf(false)
 
-    private var customTargetIp: String? = null
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as? AudioPlaybackService.LocalBinder
-            playbackService = binder?.getService()
+            playbackService = (service as? AudioPlaybackService.LocalBinder)?.getService()
             isBound = true
-            monitorServiceState()
+            monitorSpeakerState()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             playbackService = null
             isBound = false
-            connectionState.value = ConnectionState.DISCONNECTED
-            statusMessage.value = "Disconnected"
+            speakerState.value = ConnectionState.DISCONNECTED
         }
     }
 
-    private val requestNotificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            // Notification permission granted or denied
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         discoveryManager = DeviceDiscoveryManager(this)
 
-        // Check notification permission for Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        controlClient = DeviceControlClient { state, message ->
+            runOnUiThread {
+                receiverState.value = state
+                statusMessage.value = message
+                if (state == ConnectionState.ERROR || state == ConnectionState.DISCONNECTED) {
+                    selectedDevice.value = null
+                    stopSpeakerPlayback()
+                }
             }
         }
 
-        // Restore last known IP
-        val lastIp = DeviceDiscoveryManager.getLastSavedIp(this)
-        if (lastIp != null) {
-            discoveredDevice.value = DiscoveredDevice("Windows Laptop (Saved)", lastIp, 8080)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
-
-        // Auto-discover laptop on hotspot / Wi-Fi network immediately
-        startDiscovery()
 
         setContent {
-            val connState by connectionState
+            val receiver by receiverState
+            val speaker by speakerState
             val status by statusMessage
-            val device by discoveredDevice
+            val devices by discoveredDevices
+            val selected by selectedDevice
             val scanning by isScanning
-            val bufferDepth by bufferDepthMs
-            val lost by lostPackets
-            val under by underruns
+            val update by pendingUpdate
+            val showUpdate by showUpdateDialog
 
             MainScreen(
-                connectionState = connState,
+                receiverState = receiver,
+                speakerState = speaker,
                 statusMessage = status,
-                discoveredDevice = device,
+                devices = devices,
+                selectedDevice = selected,
                 isScanning = scanning,
-                onTogglePlayback = { toggleStreaming() },
-                onCustomIpChange = { newIp ->
-                    customTargetIp = newIp
-                    DeviceDiscoveryManager.saveLastIp(this@MainActivity, newIp)
-                    discoveredDevice.value = DiscoveredDevice("Custom Target", newIp, 8080)
-                },
-                onRescanClick = { startDiscovery() },
-                bufferDepthMs = bufferDepth,
-                lostPackets = lost,
-                underruns = under
+                onSelectDevice = { connectToDevice(it) },
+                onDisconnect = { disconnectDevice() },
+                onToggleSpeaker = { toggleSpeaker() },
+                onRescan = { startDiscovery() }
             )
+
+            if (showUpdate && update != null) {
+                AlertDialog(
+                    onDismissRequest = { showUpdateDialog.value = false },
+                    title = { Text("Vessel update available") },
+                    text = { Text("Version ${update.version}\n\n${update.notes}") },
+                    confirmButton = {
+                        Button(onClick = {
+                            showUpdateDialog.value = false
+                            UpdateChecker(this@MainActivity).downloadAndInstall(update)
+                        }) { Text("Download and install") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showUpdateDialog.value = false }) { Text("Later") }
+                    }
+                )
+            }
         }
+
+        startDiscovery()
+        checkForUpdatesAtStartup()
     }
 
     override fun onStart() {
         super.onStart()
-        val intent = Intent(this, AudioPlaybackService::class.java)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        bindService(Intent(this, AudioPlaybackService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
     override fun onStop() {
-        super.onStop()
         if (isBound) {
             unbindService(serviceConnection)
             isBound = false
+        }
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        controlClient.disconnect()
+        super.onDestroy()
+    }
+
+    private fun checkForUpdatesAtStartup() {
+        // Deliberately launch-only: no periodic worker or background polling is registered.
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val update = UpdateChecker(this@MainActivity).checkAtStartup()
+            if (update != null && isActive) {
+                runOnUiThread {
+                    pendingUpdate.value = update
+                    showUpdateDialog.value = true
+                }
+            }
         }
     }
 
     private fun startDiscovery() {
         if (isScanning.value) return
         isScanning.value = true
-
-        discoveryManager.startDiscovery { device ->
+        statusMessage.value = "Searching for Vessel servers..."
+        discoveryManager.startDiscovery { devices ->
             isScanning.value = false
-            if (device != null) {
-                discoveredDevice.value = device
-                DeviceDiscoveryManager.saveLastIp(this@MainActivity, device.ip)
-            }
-        }
-    }
-
-    private fun toggleStreaming() {
-        val targetIp = customTargetIp ?: discoveredDevice.value?.ip ?: "10.221.155.222"
-
-        if (connectionState.value == ConnectionState.CONNECTED ||
-            connectionState.value == ConnectionState.CONNECTING ||
-            connectionState.value == ConnectionState.RECONNECTING) {
-            // STOP
-            val stopIntent = Intent(this, AudioPlaybackService::class.java).apply {
-                action = AudioPlaybackService.ACTION_STOP
-            }
-            startService(stopIntent)
-            connectionState.value = ConnectionState.DISCONNECTED
-            statusMessage.value = "Audio stopped"
-        } else {
-            // START
-            val startIntent = Intent(this, AudioPlaybackService::class.java).apply {
-                action = AudioPlaybackService.ACTION_START
-                putExtra(AudioPlaybackService.EXTRA_HOST, targetIp)
-                putExtra(AudioPlaybackService.EXTRA_PORT, 8080)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(startIntent)
+            discoveredDevices.value = devices
+            statusMessage.value = if (devices.isEmpty()) {
+                "No Vessel servers found. Check the network and scan again."
             } else {
-                startService(startIntent)
+                "${devices.size} Vessel server(s) available."
             }
-            connectionState.value = ConnectionState.CONNECTING
-            statusMessage.value = "Connecting to $targetIp..."
         }
     }
 
-    private fun monitorServiceState() {
+    private fun connectToDevice(device: DiscoveredDevice) {
+        if (receiverState.value != ConnectionState.DISCONNECTED &&
+            receiverState.value != ConnectionState.ERROR
+        ) return
+
+        selectedDevice.value = device
+        receiverState.value = ConnectionState.CONNECTING
+        statusMessage.value = "Connecting to ${device.name}..."
+        controlClient.connect(device.ip, device.port, "Vessel Android")
+    }
+
+    private fun disconnectDevice() {
+        stopSpeakerPlayback()
+        controlClient.disconnect()
+        selectedDevice.value = null
+        receiverState.value = ConnectionState.DISCONNECTED
+        statusMessage.value = "Disconnected from device."
+        speakerState.value = ConnectionState.DISCONNECTED
+    }
+
+    private fun toggleSpeaker() {
+        val device = selectedDevice.value ?: return
+        when (speakerState.value) {
+            ConnectionState.CONNECTED,
+            ConnectionState.CONNECTING,
+            ConnectionState.RECONNECTING -> stopSpeakerPlayback()
+            else -> {
+                val startIntent = Intent(this, AudioPlaybackService::class.java).apply {
+                    action = AudioPlaybackService.ACTION_START
+                    putExtra(AudioPlaybackService.EXTRA_HOST, device.ip)
+                    putExtra(AudioPlaybackService.EXTRA_PORT, device.port)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(startIntent)
+                else startService(startIntent)
+                speakerState.value = ConnectionState.CONNECTING
+                statusMessage.value = "Starting Speaker service..."
+            }
+        }
+    }
+
+    private fun stopSpeakerPlayback() {
+        val stopIntent = Intent(this, AudioPlaybackService::class.java).apply {
+            action = AudioPlaybackService.ACTION_STOP
+        }
+        try { startService(stopIntent) } catch (_: Exception) { }
+        speakerState.value = ConnectionState.DISCONNECTED
+    }
+
+    private fun monitorSpeakerState() {
         lifecycleScope.launch {
             while (isActive && isBound) {
                 playbackService?.let { service ->
-                    connectionState.value = service.streamClient.connectionState.value
-                    statusMessage.value = service.streamClient.statusMessage.value
-                    bufferDepthMs.value = service.jitterBuffer.bufferDepthMs
-                    lostPackets.value = service.streamClient.lostPackets
-                    underruns.value = service.jitterBuffer.underruns
+                    speakerState.value = service.streamClient.connectionState.value
+                    if (speakerState.value == ConnectionState.ERROR) {
+                        statusMessage.value = service.streamClient.statusMessage.value
+                    }
                 }
-                delay(100)
+                delay(250)
             }
         }
     }

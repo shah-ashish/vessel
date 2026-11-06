@@ -8,35 +8,33 @@ import com.laptopstream.audio.ui.screens.DiscoveryScreen
 
 @Composable
 fun MainScreen(
-    connectionState: ConnectionState,
+    receiverState: ConnectionState,
+    speakerState: ConnectionState,
     statusMessage: String,
-    discoveredDevice: DiscoveredDevice?,
+    devices: List<DiscoveredDevice>,
+    selectedDevice: DiscoveredDevice?,
     isScanning: Boolean,
-    onTogglePlayback: () -> Unit,
-    onCustomIpChange: (String) -> Unit,
-    onRescanClick: () -> Unit,
-    bufferDepthMs: Float,
-    lostPackets: Long,
-    underruns: Int
+    onSelectDevice: (DiscoveredDevice) -> Unit,
+    onDisconnect: () -> Unit,
+    onToggleSpeaker: () -> Unit,
+    onRescan: () -> Unit
 ) {
-    val activeIp = discoveredDevice?.ip ?: "10.221.155.222"
-
-    if (connectionState == ConnectionState.CONNECTED) {
+    if (receiverState == ConnectionState.CONNECTED && selectedDevice != null) {
         ConnectedScreen(
-            connectionState = connectionState,
-            discoveredDevice = discoveredDevice,
-            targetIp = activeIp,
-            onTogglePlayback = onTogglePlayback,
-            onSettingsClick = onRescanClick,
-            notificationMessage = statusMessage
+            device = selectedDevice,
+            receiverState = receiverState,
+            speakerState = speakerState,
+            statusMessage = statusMessage,
+            onDisconnect = onDisconnect,
+            onToggleSpeaker = onToggleSpeaker
         )
     } else {
         DiscoveryScreen(
-            discoveredDevice = discoveredDevice,
+            devices = devices,
             isScanning = isScanning,
-            onConnectClick = onTogglePlayback,
-            onSettingsClick = onRescanClick,
-            notificationMessage = statusMessage
+            statusMessage = statusMessage,
+            onSelectDevice = onSelectDevice,
+            onRescan = onRescan
         )
     }
 }

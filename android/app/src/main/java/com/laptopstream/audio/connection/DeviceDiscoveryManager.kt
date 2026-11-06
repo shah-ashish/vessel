@@ -5,9 +5,6 @@ import android.net.DhcpInfo
 import android.net.wifi.WifiManager
 import android.util.Log
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.DatagramPacket
@@ -31,132 +28,107 @@ class DeviceDiscoveryManager(private val context: Context) {
         const val DEFAULT_PORT = 8080
         const val UDP_DISCOVERY_PORT = 8082
 
-        fun getLastSavedIp(context: Context): String? {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            return prefs.getString(KEY_LAST_IP, null)
-        }
+        fun getLastSavedIp(context: Context): String? =
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_LAST_IP, null)
 
         fun saveLastIp(context: Context, ip: String) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().putString(KEY_LAST_IP, ip).apply()
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putString(KEY_LAST_IP, ip).apply()
         }
     }
-
-    private val _discoveredDevice = MutableStateFlow<DiscoveredDevice?>(null)
-    val discoveredDevice: StateFlow<DiscoveredDevice?> = _discoveredDevice.asStateFlow()
-
-    private val _isScanning = MutableStateFlow(false)
-    val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(800, TimeUnit.MILLISECONDS)
         .readTimeout(800, TimeUnit.MILLISECONDS)
         .build()
-
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    @Volatile private var scanning = false
 
-    /**
-     * Scans for the Windows laptop via Hotspot Gateway check and UDP Broadcast.
-     */
-    fun startDiscovery(onResult: (DiscoveredDevice?) -> Unit = {}) {
-        if (_isScanning.value) return
-        _isScanning.value = true
-
+    /** Discovers all responding Vessel hosts and returns a de-duplicated list. */
+    fun startDiscovery(onResult: (List<DiscoveredDevice>) -> Unit) {
+        if (scanning) return
+        scanning = true
         scope.launch {
-            var foundDevice: DiscoveredDevice? = null
+            val results = linkedMapOf<String, DiscoveredDevice>()
+            try {
+                val candidates = linkedSetOf<String>()
+                getLastSavedIp(context)?.let { candidates.add(it) }
+                getWifiGatewayIp()?.takeIf { it != "0.0.0.0" }?.let { candidates.add(it) }
 
-            // 1. Immediately check last known IP as candidate
-            val lastIp = getLastSavedIp(context)
-            if (lastIp != null && verifyServerAt(lastIp)) {
-                foundDevice = DiscoveredDevice("Windows Laptop (Saved)", lastIp, DEFAULT_PORT)
-                _discoveredDevice.value = foundDevice
-                _isScanning.value = false
-                withContext(Dispatchers.Main) { onResult(foundDevice) }
-                return@launch
-            }
-
-            // 2. Check Wi-Fi / Hotspot Gateway IP
-            val gatewayIp = getWifiGatewayIp()
-            if (gatewayIp != null && gatewayIp != "0.0.0.0") {
-                Log.i(TAG, "Probing Wi-Fi Hotspot Gateway: $gatewayIp")
-                if (verifyServerAt(gatewayIp)) {
-                    Log.i(TAG, "Found laptop at hotspot gateway: $gatewayIp")
-                    saveLastIp(context, gatewayIp)
-                    foundDevice = DiscoveredDevice("Windows Laptop (Hotspot)", gatewayIp, DEFAULT_PORT)
-                    _discoveredDevice.value = foundDevice
-                    _isScanning.value = false
-                    withContext(Dispatchers.Main) { onResult(foundDevice) }
-                    return@launch
+                candidates.forEach { ip ->
+                    if (verifyServerAt(ip)) {
+                        results[ip] = DiscoveredDevice(
+                            if (ip == getLastSavedIp(context)) "Windows Laptop (Saved)" else "Vessel Server",
+                            ip
+                        )
+                    }
                 }
-            }
 
-            // 3. UDP Broadcast Discovery Probe
-            val udpDevice = probeUdpBroadcast()
-            if (udpDevice != null) {
-                foundDevice = udpDevice
-                _discoveredDevice.value = foundDevice
-                saveLastIp(context, udpDevice.ip)
+                probeUdpBroadcastAll().forEach { device ->
+                    if (device.ip !in results) results[device.ip] = device
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Discovery failed: ${e.message}", e)
+            } finally {
+                scanning = false
+                withContext(Dispatchers.Main) { onResult(results.values.toList()) }
             }
-
-            _isScanning.value = false
-            withContext(Dispatchers.Main) { onResult(foundDevice) }
         }
     }
 
-    private fun verifyServerAt(ip: String, port: Int = DEFAULT_PORT): Boolean {
-        return try {
-            val request = Request.Builder()
-                .url("http://$ip:$port/api/info")
-                .build()
-            val response = httpClient.newCall(request).execute()
-            val body = response.body?.string() ?: ""
-            response.isSuccessful && body.contains("laptop-audio-stream")
-        } catch (_: Exception) {
-            false
+    private fun verifyServerAt(ip: String): Boolean = try {
+        val request = Request.Builder().url("http://$ip:$DEFAULT_PORT/api/info").build()
+        httpClient.newCall(request).execute().use { response ->
+            response.isSuccessful && (response.body?.string() ?: "").contains("laptop-audio-stream")
         }
+    } catch (_: Exception) {
+        false
     }
 
-    private fun probeUdpBroadcast(): DiscoveredDevice? {
-        return try {
-            val socket = DatagramSocket()
+    private fun probeUdpBroadcastAll(): List<DiscoveredDevice> {
+        val found = linkedMapOf<String, DiscoveredDevice>()
+        val socket = DatagramSocket()
+        try {
             socket.broadcast = true
-            socket.soTimeout = 1200
-
+            socket.soTimeout = 350
             val message = "LAUD_DISCOVER".toByteArray()
             val broadcastAddr = InetAddress.getByName("255.255.255.255")
-            val packet = DatagramPacket(message, message.size, broadcastAddr, UDP_DISCOVERY_PORT)
-            socket.send(packet)
+            socket.send(DatagramPacket(message, message.size, broadcastAddr, UDP_DISCOVERY_PORT))
 
-            val receiveBuf = ByteArray(256)
-            val receivePacket = DatagramPacket(receiveBuf, receiveBuf.size)
-            socket.receive(receivePacket)
-
-            val reply = String(receivePacket.data, 0, receivePacket.length)
-            socket.close()
-
-            if (reply.startsWith("LAUD_HERE")) {
-                val senderIp = receivePacket.address.hostAddress ?: ""
-                Log.i(TAG, "UDP Discovery received from: $senderIp")
-                if (senderIp.isNotEmpty()) {
-                    return DiscoveredDevice("Windows Laptop (LAN)", senderIp, DEFAULT_PORT)
+            val deadline = System.currentTimeMillis() + 1600
+            while (System.currentTimeMillis() < deadline) {
+                try {
+                    val buffer = ByteArray(256)
+                    val packet = DatagramPacket(buffer, buffer.size)
+                    socket.receive(packet)
+                    val reply = String(packet.data, 0, packet.length)
+                    if (reply.startsWith("LAUD_HERE")) {
+                        val ip = packet.address.hostAddress.orEmpty()
+                        if (ip.isNotBlank()) {
+                            found[ip] = DiscoveredDevice("Vessel Server", ip)
+                        }
+                    }
+                } catch (_: java.net.SocketTimeoutException) {
+                    // Continue until the discovery window expires to collect multiple hosts.
                 }
             }
-            null
         } catch (e: Exception) {
-            Log.d(TAG, "UDP probe finished: ${e.message}")
-            null
+            Log.d(TAG, "UDP discovery finished: ${e.message}")
+        } finally {
+            socket.close()
         }
+        return found.values.toList()
     }
 
     private fun getWifiGatewayIp(): String? {
         return try {
-            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
-            val dhcpInfo: DhcpInfo = wifiManager?.dhcpInfo ?: return null
-            val gateway = dhcpInfo.gateway
-            if (gateway == 0) return null
-
-            // Convert little-endian int IP to dotted-decimal string
-            "${gateway and 0xFF}.${gateway shr 8 and 0xFF}.${gateway shr 16 and 0xFF}.${gateway shr 24 and 0xFF}"
+            val manager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+                ?: return null
+            val dhcp: DhcpInfo = manager.dhcpInfo ?: return null
+            val gateway = dhcp.gateway
+            if (gateway == 0) null else
+                "${gateway and 0xFF}.${gateway shr 8 and 0xFF}.${gateway shr 16 and 0xFF}.${gateway shr 24 and 0xFF}"
         } catch (_: Exception) {
             null
         }
