@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "androidVersionCode": 1,
+  "releaseTag": "v1.0.0",
+  "releaseNotes": "Initial Vessel release with independent device, server, and service controls."
+}

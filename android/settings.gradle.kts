@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LaptopAudioStream"
+rootProject.name = "Vessel"
 include(":app")

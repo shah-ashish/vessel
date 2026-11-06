@@ -1,18 +1,40 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
+// version.json at the repository root is the single source of truth for app releases.
+val versionManifestFile = rootProject.projectDir.parentFile.resolve("version.json")
+val versionManifest = JsonSlurper().parse(versionManifestFile) as Map<*, *>
+val vesselVersionName = versionManifest["version"] as String
+val vesselVersionCode = (versionManifest["androidVersionCode"] as Number).toInt()
+
+// Release signing is configured only from environment variables supplied by the build runner.
+// Never commit a keystore or signing password to the repository.
+val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+val releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+val releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+val releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseKeystorePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
+    // Keep the Kotlin source namespace stable. The install identity is applicationId below.
     namespace = "com.laptopstream.audio"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.laptopstream.audio"
+        applicationId = "io.github.shahashish.vessel"
         minSdk = 29
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = vesselVersionCode
+        versionName = vesselVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -20,9 +42,23 @@ android {
         }
     }
 
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

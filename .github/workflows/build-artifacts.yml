@@ -1,71 +1,168 @@
-name: Build Mobile APK & Desktop EXE Artifacts
+name: Vessel Build and Release
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
-    branches: [ "**" ]
+    branches: ["**"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  # -------------------------------------------------------------
-  # 1. Android APK Build Job (Official Gradle Action Pattern)
-  # -------------------------------------------------------------
-  build-android-apk:
-    name: Build Android APK
+  android-debug:
+    name: Android debug validation
+    if: "!startsWith(github.ref, 'refs/tags/')"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.5'
-
-      - name: Build Debug APK with Gradle
-        run: |
-          cd android
-          gradle assembleDebug --stacktrace
-
-      - name: Upload Android APK Artifact
-        uses: actions/upload-artifact@v4
+          gradle-version: "8.5"
+      - name: Build debug APK
+        working-directory: android
+        run: gradle assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
         with:
-          name: LaptopAudioStream-Android-APK
+          name: Vessel-Android-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
-  # -------------------------------------------------------------
-  # 2. Windows Desktop NSIS Installer Build Job
-  # -------------------------------------------------------------
-  build-desktop-exe:
-    name: Build Windows Desktop App (NSIS Installer)
+  windows-validation:
+    name: Windows desktop validation
+    if: "!startsWith(github.ref, 'refs/tags/')"
     runs-on: windows-latest
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build Desktop Executable (Release)
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build desktop executable
         run: cargo build --release
-
-      - name: Set up NSIS
-        uses: nsis-dev/setup-nsis@v1
-
-      - name: Compile NSIS Windows Installer (.exe)
+      - uses: nsis-dev/setup-nsis@v1
+      - name: Build installer
         run: makensis installer.nsi
-
-      - name: Upload NSIS Installer Setup Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: Vessel-Windows-Setup-Installer
+          name: Vessel-Windows-Installer
           path: Vessel-Setup-x64.exe
           if-no-files-found: error
+
+  release-android:
+    name: Build signed Android release APK
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.5"
+      - name: Validate release version and signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          manifest = json.loads(Path("version.json").read_text())
+          tag = os.environ["GITHUB_REF_NAME"]
+          if manifest["releaseTag"] != tag or "v" + manifest["version"] != tag:
+              raise SystemExit("Git tag must match version.json releaseTag and version.")
+          for key in ("ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"):
+              if not os.environ.get(key):
+                  raise SystemExit(f"Missing required GitHub Actions secret: {key}")
+          PY
+      - name: Decode Android release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vessel-release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vessel-release.jks" >> "$GITHUB_ENV"
+      - name: Build signed release APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: gradle assembleRelease --stacktrace
+      - name: Name release APK
+        shell: bash
+        run: |
+          VERSION="$(python -c 'import json; print(json.load(open("version.json"))["version"])')"
+          cp android/app/build/outputs/apk/release/app-release.apk "Vessel-Android-$VERSION.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vessel-Android-Release
+          path: Vessel-Android-*.apk
+          if-no-files-found: error
+
+  release-windows:
+    name: Build Windows release installer
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Validate release tag
+        shell: pwsh
+        run: |
+          $manifest = Get-Content version.json | ConvertFrom-Json
+          if ($manifest.releaseTag -ne $env:GITHUB_REF_NAME -or "v$($manifest.version)" -ne $env:GITHUB_REF_NAME) {
+            throw "Git tag must match version.json releaseTag and version."
+          }
+      - name: Build desktop executable
+        run: cargo build --release
+      - uses: nsis-dev/setup-nsis@v1
+      - name: Build versioned Windows installer
+        shell: pwsh
+        run: |
+          makensis installer.nsi
+          $version = (Get-Content version.json | ConvertFrom-Json).version
+          Rename-Item Vessel-Setup-x64.exe "Vessel-Windows-Setup-$version.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vessel-Windows-Release
+          path: Vessel-Windows-Setup-*.exe
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [release-android, release-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Vessel-Android-Release
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: Vessel-Windows-Release
+          path: dist
+      - name: Generate SHA-256 checksums
+        working-directory: dist
+        run: sha256sum Vessel-* > SHA256SUMS.txt
+      - name: Create GitHub Release and upload installers
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/Vessel-Android-*.apk
+            dist/Vessel-Windows-Setup-*.exe
+            dist/SHA256SUMS.txt
