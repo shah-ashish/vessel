@@ -1,72 +1,69 @@
 ; ====================================================================
-; Vessel - NSIS Modern Windows Installer Script
+; Vessel - Windows installer
 ; ====================================================================
 
 !include "MUI2.nsh"
 
-; General Settings
-Name "Vessel - Laptop Audio Stream"
+Name "Vessel"
 OutFile "Vessel-Setup-x64.exe"
 InstallDir "$PROGRAMFILES64\Vessel"
 InstallDirRegKey HKLM "Software\Vessel" "Install_Dir"
 RequestExecutionLevel admin
 
-; UI Configuration
 !define MUI_ABORTWARNING
 !define MUI_HEADERIMAGE
 !define MUI_WELCOMEFINISHPAGE_BITMAP_NOSTRETCH
 
-; Installer Pages
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
+; Ask the user whether a desktop shortcut should be created.
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 
-; Finish Page: Option to launch immediately
 !define MUI_FINISHPAGE_RUN "$INSTDIR\laptop-audio-stream.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Launch Vessel Laptop Audio Stream"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch Vessel"
 !insertmacro MUI_PAGE_FINISH
 
-; Uninstaller Pages
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
 !insertmacro MUI_LANGUAGE "English"
 
 ; --------------------------------------------------------------------
-; Installation Section
+; Required application files and Start Menu shortcuts
 ; --------------------------------------------------------------------
 Section "Vessel (required)" SecCore
   SectionIn RO
-
-  ; Target all users for desktop and start menu shortcuts
   SetShellVarContext all
 
   SetOutPath "$INSTDIR"
   File "target\release\laptop-audio-stream.exe"
 
-  ; Registry key for install location
   WriteRegStr HKLM "Software\Vessel" "Install_Dir" "$INSTDIR"
-
-  ; Register with Windows Add/Remove Programs
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "DisplayName" "Vessel - Laptop Audio Stream"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "DisplayName" "Vessel"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "DisplayIcon" '"$INSTDIR\laptop-audio-stream.exe"'
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "Publisher" "Vessel Audio"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "Publisher" "Vessel"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "NoRepair" 1
 
-  ; Create uninstaller executable
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  ; Create Start Menu & Desktop Shortcuts
   CreateDirectory "$SMPROGRAMS\Vessel"
   CreateShortcut "$SMPROGRAMS\Vessel\Vessel.lnk" "$INSTDIR\laptop-audio-stream.exe" "" "$INSTDIR\laptop-audio-stream.exe" 0
   CreateShortcut "$SMPROGRAMS\Vessel\Uninstall Vessel.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+SectionEnd
+
+; --------------------------------------------------------------------
+; Optional desktop shortcut. The user makes this choice during setup.
+; --------------------------------------------------------------------
+Section /o "Create a desktop shortcut" SecDesktopShortcut
+  SetShellVarContext all
   CreateShortcut "$DESKTOP\Vessel.lnk" "$INSTDIR\laptop-audio-stream.exe" "" "$INSTDIR\laptop-audio-stream.exe" 0
 SectionEnd
 
 ; --------------------------------------------------------------------
-; Uninstaller Section
+; Uninstaller
 ; --------------------------------------------------------------------
 Section "Uninstall"
   SetShellVarContext all
