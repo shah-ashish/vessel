@@ -1,4 +1,4 @@
-package com.laptopstream.audio.service
+package com.laptopstream.audio.features.speaker
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -15,9 +15,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.laptopstream.audio.MainActivity
 import com.laptopstream.audio.R
-import com.laptopstream.audio.audio.AudioTrackPlayer
-import com.laptopstream.audio.audio.JitterBuffer
-import com.laptopstream.audio.network.StreamClient
+import com.laptopstream.audio.connection.StreamClient
 
 class AudioPlaybackService : Service() {
 

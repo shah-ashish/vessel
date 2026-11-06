@@ -1,4 +1,4 @@
-package com.laptopstream.audio.network
+package com.laptopstream.audio.features.speaker
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

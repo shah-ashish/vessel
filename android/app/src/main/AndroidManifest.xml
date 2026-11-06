@@ -33,7 +33,7 @@
         </activity>
 
         <service
-            android:name=".service.AudioPlaybackService"
+            android:name=".features.speaker.AudioPlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 

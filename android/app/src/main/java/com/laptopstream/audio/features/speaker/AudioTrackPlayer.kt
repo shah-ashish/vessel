@@ -1,4 +1,4 @@
-package com.laptopstream.audio.audio
+package com.laptopstream.audio.features.speaker
 
 import android.media.AudioAttributes
 import android.media.AudioFormat

@@ -1,7 +1,9 @@
-package com.laptopstream.audio.network
+package com.laptopstream.audio.connection
 
 import android.util.Log
-import com.laptopstream.audio.audio.JitterBuffer
+import com.laptopstream.audio.features.speaker.JitterBuffer
+import com.laptopstream.audio.features.speaker.LaudPacketParser
+import com.laptopstream.audio.features.speaker.Protocol
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

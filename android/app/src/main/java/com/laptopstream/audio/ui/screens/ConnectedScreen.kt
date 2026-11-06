@@ -19,8 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.laptopstream.audio.discovery.DiscoveredDevice
-import com.laptopstream.audio.network.StreamClient.ConnectionState
+import com.laptopstream.audio.connection.DiscoveredDevice
+import com.laptopstream.audio.connection.StreamClient.ConnectionState
 import com.laptopstream.audio.ui.components.SpeakerButton
 
 @Composable

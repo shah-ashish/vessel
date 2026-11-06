@@ -1,4 +1,4 @@
-package com.laptopstream.audio.audio
+package com.laptopstream.audio.features.speaker
 
 import kotlin.math.cos
 import kotlin.math.max

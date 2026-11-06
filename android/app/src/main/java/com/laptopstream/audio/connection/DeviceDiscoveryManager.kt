@@ -1,4 +1,4 @@
-package com.laptopstream.audio.discovery
+package com.laptopstream.audio.connection
 
 import android.content.Context
 import android.net.DhcpInfo

@@ -15,10 +15,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.laptopstream.audio.discovery.DeviceDiscoveryManager
-import com.laptopstream.audio.discovery.DiscoveredDevice
-import com.laptopstream.audio.network.StreamClient.ConnectionState
-import com.laptopstream.audio.service.AudioPlaybackService
+import com.laptopstream.audio.connection.DeviceDiscoveryManager
+import com.laptopstream.audio.connection.DiscoveredDevice
+import com.laptopstream.audio.connection.StreamClient.ConnectionState
+import com.laptopstream.audio.features.speaker.AudioPlaybackService
 import com.laptopstream.audio.ui.MainScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive

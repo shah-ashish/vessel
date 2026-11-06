@@ -1,4 +1,4 @@
-package com.laptopstream.audio.network
+package com.laptopstream.audio.features.speaker
 
 /**
  * Protocol constants for the LAUD v1 20-byte framed binary audio format.

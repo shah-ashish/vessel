@@ -1,8 +1,8 @@
 package com.laptopstream.audio.ui
 
 import androidx.compose.runtime.Composable
-import com.laptopstream.audio.discovery.DiscoveredDevice
-import com.laptopstream.audio.network.StreamClient.ConnectionState
+import com.laptopstream.audio.connection.DiscoveredDevice
+import com.laptopstream.audio.connection.StreamClient.ConnectionState
 import com.laptopstream.audio.ui.screens.ConnectedScreen
 import com.laptopstream.audio.ui.screens.DiscoveryScreen
 
