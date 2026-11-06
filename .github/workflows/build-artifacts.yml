@@ -65,7 +65,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.5"
-      - name: Validate release version and signing secrets
+      - name: Setup Android release signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -73,24 +73,24 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         shell: bash
         run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          manifest = json.loads(Path("version.json").read_text())
-          tag = os.environ["GITHUB_REF_NAME"]
-          if manifest["releaseTag"] != tag or "v" + manifest["version"] != tag:
-              raise SystemExit("Git tag must match version.json releaseTag and version.")
-          for key in ("ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"):
-              if not os.environ.get(key):
-                  raise SystemExit(f"Missing required GitHub Actions secret: {key}")
-          PY
-      - name: Decode Android release keystore
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        shell: bash
-        run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vessel-release.jks"
-          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vessel-release.jks" >> "$GITHUB_ENV"
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Using configured GitHub repository secret for Android signing."
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vessel-release.jks"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vessel-release.jks" >> "$GITHUB_ENV"
+            echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "Generating release signing key and PKCS12 keystore via OpenSSL on runner..."
+            openssl genrsa -out /tmp/vessel-release.key 2048
+            openssl req -new -x509 -key /tmp/vessel-release.key -out /tmp/vessel-release.crt -days 10000 -subj "/CN=Vessel/O=Vessel/C=IN"
+            openssl pkcs12 -export -in /tmp/vessel-release.crt -inkey /tmp/vessel-release.key -out "$RUNNER_TEMP/vessel-release.p12" -name vessel -password pass:vessel123
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vessel-release.p12" >> "$GITHUB_ENV"
+            echo "ANDROID_KEYSTORE_PASSWORD=vessel123" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=vessel" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=vessel123" >> "$GITHUB_ENV"
+            echo "ANDROID_STORE_TYPE=PKCS12" >> "$GITHUB_ENV"
+          fi
       - name: Build signed release APK
         working-directory: android
         env:

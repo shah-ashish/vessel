@@ -71,6 +71,31 @@ class UpdateChecker(private val context: Context) {
         }
     }
 
+    companion object {
+        @Volatile
+        var pendingInstallFile: File? = null
+
+        fun checkPendingInstall(context: Context) {
+            val file = pendingInstallFile ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                context.packageManager.canRequestPackageInstalls()
+            ) {
+                pendingInstallFile = null
+                triggerInstall(context, file)
+            }
+        }
+
+        fun triggerInstall(context: Context, apkFile: File) {
+            val authority = "${context.packageName}.fileprovider"
+            val uri = FileProvider.getUriForFile(context, authority, apkFile)
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(intent)
+        }
+    }
+
     /** Download, verify SHA-256, and hand the APK to Android's package installer. */
     fun downloadAndInstall(update: VesselUpdate) {
         Thread {
@@ -88,26 +113,18 @@ class UpdateChecker(private val context: Context) {
                 val actual = sha256(apkFile)
                 require(expected.equals(actual, ignoreCase = true)) { "APK checksum verification failed" }
 
-                val install = {
-                    val authority = "${context.packageName}.fileprovider"
-                    val uri = FileProvider.getUriForFile(context, authority, apkFile)
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(uri, "application/vnd.android.package-archive")
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(intent)
-                }
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                     !context.packageManager.canRequestPackageInstalls()
                 ) {
+                    pendingInstallFile = apkFile
                     val settingsIntent = Intent(
                         Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                         Uri.parse("package:${context.packageName}")
                     ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(settingsIntent)
                 } else {
-                    install()
+                    pendingInstallFile = null
+                    triggerInstall(context, apkFile)
                 }
             } catch (error: Exception) {
                 android.util.Log.e("VesselUpdateChecker", "Update failed: ${error.message}", error)

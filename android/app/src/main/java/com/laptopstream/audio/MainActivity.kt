@@ -136,6 +136,11 @@ class MainActivity : ComponentActivity() {
         bindService(Intent(this, AudioPlaybackService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
+    override fun onResume() {
+        super.onResume()
+        UpdateChecker.checkPendingInstall(this)
+    }
+
     override fun onStop() {
         if (isBound) {
             unbindService(serviceConnection)

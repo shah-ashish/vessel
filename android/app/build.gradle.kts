@@ -17,6 +17,7 @@ val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
 val releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
 val releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
 val releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+val releaseStoreType = System.getenv("ANDROID_STORE_TYPE") ?: if (releaseKeystorePath?.endsWith(".p12", ignoreCase = true) == true) "PKCS12" else "JKS"
 val hasReleaseSigning = listOf(
     releaseKeystorePath,
     releaseStorePassword,
@@ -49,6 +50,7 @@ android {
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
                 keyPassword = releaseKeyPassword
+                storeType = releaseStoreType
             }
         }
     }

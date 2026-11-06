@@ -48,9 +48,9 @@ struct AppState {
 }
 
 #[derive(Clone, Debug)]
-struct ReceiverInfo {
-    name: String,
-    ip: String,
+pub struct ReceiverInfo {
+    pub name: String,
+    pub ip: String,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -177,6 +177,8 @@ async fn main() -> Result<()> {
             peak_levels,
             connected_clients,
             is_streaming,
+            receiver_active,
+            receiver_info,
             format!("http://{}:8080", local_ip),
         );
     } else {

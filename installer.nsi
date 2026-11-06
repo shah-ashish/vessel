@@ -11,6 +11,8 @@ InstallDirRegKey HKLM "Software\Vessel" "Install_Dir"
 RequestExecutionLevel admin
 
 !define MUI_ABORTWARNING
+!define MUI_ICON "assets\vessel.ico"
+!define MUI_UNICON "assets\vessel.ico"
 !define MUI_HEADERIMAGE
 !define MUI_WELCOMEFINISHPAGE_BITMAP_NOSTRETCH
 
@@ -38,11 +40,14 @@ Section "Vessel (required)" SecCore
 
   SetOutPath "$INSTDIR"
   File "target\release\laptop-audio-stream.exe"
+  SetOutPath "$INSTDIR\assets"
+  File "assets\vessel.ico"
+  SetOutPath "$INSTDIR"
 
   WriteRegStr HKLM "Software\Vessel" "Install_Dir" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "DisplayName" "Vessel"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "DisplayIcon" '"$INSTDIR\laptop-audio-stream.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "DisplayIcon" '"$INSTDIR\assets\vessel.ico"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "Publisher" "Vessel"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Vessel" "NoRepair" 1

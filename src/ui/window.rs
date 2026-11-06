@@ -21,6 +21,7 @@ use windows_sys::Win32::{
     },
 };
 
+use crate::ReceiverInfo;
 use super::components::{copy_to_clipboard, draw_native_vu_meter, to_wide};
 
 const ID_BTN_COPY: usize = 101;
@@ -31,12 +32,15 @@ static mut GUI_STATE: Option<GuiState> = None;
 
 struct GuiState {
     peak_levels: Arc<Mutex<(f32, f32)>>,
-    connected_clients: Arc<std::sync::atomic::AtomicUsize>,
+    _connected_clients: Arc<std::sync::atomic::AtomicUsize>,
     is_streaming: Arc<AtomicBool>,
+    receiver_active: Arc<AtomicBool>,
+    receiver_info: Arc<Mutex<Option<ReceiverInfo>>>,
     server_url: String,
     hwnd_btn_toggle: HWND,
     hwnd_btn_copy: HWND,
     hwnd_clients_lbl: HWND,
+    hwnd_service_lbl: HWND,
     smooth_l: f32,
     smooth_r: f32,
 }
@@ -45,6 +49,8 @@ pub fn run_native_gui(
     peak_levels: Arc<Mutex<(f32, f32)>>,
     connected_clients: Arc<std::sync::atomic::AtomicUsize>,
     is_streaming: Arc<AtomicBool>,
+    receiver_active: Arc<AtomicBool>,
+    receiver_info: Arc<Mutex<Option<ReceiverInfo>>>,
     server_url: String,
 ) {
     unsafe {
@@ -68,12 +74,15 @@ pub fn run_native_gui(
 
         GUI_STATE = Some(GuiState {
             peak_levels,
-            connected_clients,
+            _connected_clients: connected_clients,
             is_streaming,
+            receiver_active,
+            receiver_info,
             server_url: server_url.clone(),
             hwnd_btn_toggle: 0,
             hwnd_btn_copy: 0,
             hwnd_clients_lbl: 0,
+            hwnd_service_lbl: 0,
             smooth_l: 0.0,
             smooth_r: 0.0,
         });
@@ -87,7 +96,7 @@ pub fn run_native_gui(
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             480,
-            490,
+            510,
             0,
             0,
             instance,
@@ -220,15 +229,15 @@ unsafe extern "system" fn wnd_proc(
             );
             SendMessageW(h_copy, 0x0030, font as usize, 1);
 
-            // Connected Clients Label
-            let clients_text = to_wide("Active Mobile Receivers: 0 connected");
+            // Connected Receiver Label
+            let clients_text = to_wide("Connected Receiver: None (Waiting for mobile app...)");
             let h_clients = CreateWindowExW(
                 0,
                 static_class.as_ptr(),
                 clients_text.as_ptr(),
                 WS_CHILD | WS_VISIBLE,
                 24,
-                260,
+                255,
                 420,
                 20,
                 hwnd,
@@ -238,6 +247,24 @@ unsafe extern "system" fn wnd_proc(
             );
             SendMessageW(h_clients, 0x0030, font as usize, 1);
 
+            // Services Status Label
+            let service_text = to_wide("Speaker Service: Streaming · 48,000 Hz Stereo");
+            let h_service = CreateWindowExW(
+                0,
+                static_class.as_ptr(),
+                service_text.as_ptr(),
+                WS_CHILD | WS_VISIBLE,
+                24,
+                280,
+                420,
+                20,
+                hwnd,
+                0,
+                instance,
+                std::ptr::null(),
+            );
+            SendMessageW(h_service, 0x0030, font as usize, 1);
+
             // Stream Pause/Resume Toggle Button
             let toggle_text = to_wide("Stop Streaming");
             let h_toggle = CreateWindowExW(
@@ -246,7 +273,7 @@ unsafe extern "system" fn wnd_proc(
                 toggle_text.as_ptr(),
                 WS_CHILD | WS_VISIBLE | WS_TABSTOP | (BS_PUSHBUTTON as u32),
                 24,
-                310,
+                320,
                 190,
                 38,
                 hwnd,
@@ -264,7 +291,7 @@ unsafe extern "system" fn wnd_proc(
                 exit_text.as_ptr(),
                 WS_CHILD | WS_VISIBLE | WS_TABSTOP | (BS_PUSHBUTTON as u32),
                 244,
-                310,
+                320,
                 190,
                 38,
                 hwnd,
@@ -275,14 +302,14 @@ unsafe extern "system" fn wnd_proc(
             SendMessageW(h_exit, 0x0030, font as usize, 1);
 
             // Status Notice Footer
-            let footer_text = to_wide("UDP auto-discovery active on port 8082 · Phone auto-connects");
+            let footer_text = to_wide("Vessel v1.0.0 · UDP auto-discovery on 8082 · Midnight Control");
             let h_footer = CreateWindowExW(
                 0,
                 static_class.as_ptr(),
                 footer_text.as_ptr(),
                 WS_CHILD | WS_VISIBLE,
                 24,
-                390,
+                410,
                 420,
                 20,
                 hwnd,
@@ -296,6 +323,7 @@ unsafe extern "system" fn wnd_proc(
                 state.hwnd_btn_toggle = h_toggle;
                 state.hwnd_btn_copy = h_copy;
                 state.hwnd_clients_lbl = h_clients;
+                state.hwnd_service_lbl = h_service;
             }
 
             // Set 30ms timer for smooth VU meter animation
@@ -342,9 +370,29 @@ unsafe extern "system" fn wnd_proc(
                     state.smooth_l = if raw_l > state.smooth_l { raw_l } else { (state.smooth_l * 0.85).max(0.0) };
                     state.smooth_r = if raw_r > state.smooth_r { raw_r } else { (state.smooth_r * 0.85).max(0.0) };
 
-                    let clients = state.connected_clients.load(Ordering::Relaxed);
-                    let lbl = to_wide(&format!("Active Mobile Receivers: {} connected", clients));
+                    let is_active = state.receiver_active.load(Ordering::Relaxed);
+                    let rx_text = if is_active {
+                        let info_lock = state.receiver_info.lock().ok();
+                        let info_opt = info_lock.as_ref().and_then(|g| g.as_ref());
+                        if let Some(info) = info_opt {
+                            format!("Connected Receiver: {} ({}) · Active", info.name, info.ip)
+                        } else {
+                            "Connected Receiver: Android receiver · Active".to_string()
+                        }
+                    } else {
+                        "Connected Receiver: None (Waiting for mobile app...)".to_string()
+                    };
+                    let lbl = to_wide(&rx_text);
                     SendMessageW(state.hwnd_clients_lbl, 0x000C /* WM_SETTEXT */, 0, lbl.as_ptr() as LPARAM);
+
+                    let streaming = state.is_streaming.load(Ordering::Relaxed);
+                    let srv_text = if streaming {
+                        "Speaker Service: Streaming · 48,000 Hz Stereo"
+                    } else {
+                        "Speaker Service: Paused / Muted"
+                    };
+                    let srv_lbl = to_wide(srv_text);
+                    SendMessageW(state.hwnd_service_lbl, 0x000C /* WM_SETTEXT */, 0, srv_lbl.as_ptr() as LPARAM);
 
                     // Repaint the VU meter area only
                     let meter_rect = RECT { left: 24, top: 80, right: 440, bottom: 170 };
