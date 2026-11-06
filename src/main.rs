@@ -24,8 +24,8 @@ use tokio::sync::broadcast;
 use tracing::{error, info, warn};
 
 pub mod connection;
-pub mod gui;
 pub mod services;
+pub mod ui;
 
 use connection::discovery::run_discovery_responder;
 use services::speaker::{capture_system_audio, AudioPacket, WavWriter};
@@ -146,7 +146,7 @@ async fn main() -> Result<()> {
 
     // Run proper native desktop GUI application on main thread (with real Taskbar window)
     if !config.headless {
-        gui::run_native_gui(
+        ui::run_native_gui(
             peak_levels,
             connected_clients,
             is_streaming,

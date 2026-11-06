@@ -7,15 +7,10 @@ use std::sync::{
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM},
     Graphics::Gdi::{
-        BeginPaint, CreateFontW, CreateSolidBrush, DeleteObject, EndPaint, FillRect,
-        GetStockObject, InvalidateRect, SelectObject, SetBkMode, SetTextColor, TextOutW,
-        DEFAULT_GUI_FONT, FW_BOLD, HBRUSH, HDC, PAINTSTRUCT, TRANSPARENT, WHITE_BRUSH,
+        BeginPaint, CreateFontW, EndPaint, GetStockObject, InvalidateRect,
+        DEFAULT_GUI_FONT, FW_BOLD, HBRUSH, PAINTSTRUCT, WHITE_BRUSH,
     },
-    System::{
-        DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData},
-        LibraryLoader::GetModuleHandleW,
-        Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GHND},
-    },
+    System::LibraryLoader::GetModuleHandleW,
     UI::WindowsAndMessaging::{
         CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetMessageW,
         LoadCursorW, PostQuitMessage, RegisterClassW, SendMessageW, SetTimer, ShowWindow,
@@ -25,6 +20,8 @@ use windows_sys::Win32::{
         WS_MINIMIZEBOX, WS_OVERLAPPED, WS_SYSMENU, WS_TABSTOP, WS_VISIBLE,
     },
 };
+
+use super::components::{copy_to_clipboard, draw_native_vu_meter, to_wide};
 
 const ID_BTN_COPY: usize = 101;
 const ID_BTN_TOGGLE: usize = 102;
@@ -42,10 +39,6 @@ struct GuiState {
     hwnd_clients_lbl: HWND,
     smooth_l: f32,
     smooth_r: f32,
-}
-
-fn to_wide(s: &str) -> Vec<u16> {
-    s.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
 pub fn run_native_gui(
@@ -365,7 +358,13 @@ unsafe extern "system" fn wnd_proc(
             let mut ps: PAINTSTRUCT = std::mem::zeroed();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            draw_native_vu_meter(hdc);
+            let (smooth_l, smooth_r) = if let Some(state) = GUI_STATE.as_ref() {
+                (state.smooth_l, state.smooth_r)
+            } else {
+                (0.0, 0.0)
+            };
+
+            draw_native_vu_meter(hdc, smooth_l, smooth_r);
 
             EndPaint(hwnd, &ps);
             0
@@ -377,90 +376,5 @@ unsafe extern "system" fn wnd_proc(
         }
 
         _ => DefWindowProcW(hwnd, msg, wparam, lparam),
-    }
-}
-
-unsafe fn draw_native_vu_meter(hdc: HDC) {
-    let (smooth_l, smooth_r) = if let Some(state) = GUI_STATE.as_ref() {
-        (state.smooth_l, state.smooth_r)
-    } else {
-        (0.0, 0.0)
-    };
-
-    let font = GetStockObject(DEFAULT_GUI_FONT as i32);
-    SelectObject(hdc, font);
-    SetBkMode(hdc, TRANSPARENT as i32);
-    SetTextColor(hdc, 0x00333333);
-
-    // Left channel label
-    let text_l = to_wide("L");
-    TextOutW(hdc, 24, 88, text_l.as_ptr(), 1);
-
-    // Right channel label
-    let text_r = to_wide("R");
-    TextOutW(hdc, 24, 128, text_r.as_ptr(), 1);
-
-    let meter_x = 44;
-    let meter_w = 320;
-    let meter_h = 18;
-
-    // Draw Left Channel Track
-    draw_channel_bar(hdc, meter_x, 88, meter_w, meter_h, smooth_l);
-
-    // Draw Right Channel Track
-    draw_channel_bar(hdc, meter_x, 128, meter_w, meter_h, smooth_r);
-
-    // Draw dB values
-    let db_l = if smooth_l <= 0.0001 { "-∞ dB".to_string() } else { format!("{:.1} dB", 20.0 * smooth_l.log10().max(-48.0)) };
-    let db_r = if smooth_r <= 0.0001 { "-∞ dB".to_string() } else { format!("{:.1} dB", 20.0 * smooth_r.log10().max(-48.0)) };
-
-    let wide_dbl = to_wide(&db_l);
-    let wide_dbr = to_wide(&db_r);
-
-    TextOutW(hdc, meter_x + meter_w + 12, 88, wide_dbl.as_ptr(), (wide_dbl.len() - 1) as i32);
-    TextOutW(hdc, meter_x + meter_w + 12, 128, wide_dbr.as_ptr(), (wide_dbr.len() - 1) as i32);
-}
-
-unsafe fn draw_channel_bar(hdc: HDC, x: i32, y: i32, width: i32, height: i32, amp: f32) {
-    // Background track (dark slate)
-    let bg_rect = RECT { left: x, top: y, right: x + width, bottom: y + height };
-    let bg_brush = CreateSolidBrush(0x002B2014); // Dark slate
-    FillRect(hdc, &bg_rect, bg_brush);
-    DeleteObject(bg_brush as _);
-
-    // Calculate filled width: map -48dB..0dB -> 0..width
-    let db = if amp <= 0.0001 { -48.0 } else { 20.0 * amp.log10().clamp(-48.0, 0.0) };
-    let pct = ((db + 48.0) / 48.0).clamp(0.0, 1.0);
-    let fill_w = (width as f32 * pct) as i32;
-
-    if fill_w > 0 {
-        let fill_rect = RECT { left: x + 1, top: y + 1, right: x + fill_w - 1, bottom: y + height - 1 };
-        // Emerald green / amber active color
-        let color = if pct > 0.85 { 0x003333E6 /* Red/Amber */ } else { 0x0078B410 /* Green */ };
-        let fill_brush = CreateSolidBrush(color);
-        FillRect(hdc, &fill_rect, fill_brush);
-        DeleteObject(fill_brush as _);
-    }
-}
-
-unsafe fn copy_to_clipboard(text: &str) {
-    let wide = to_wide(text);
-    let bytes = wide.len() * 2;
-
-    let hmem = GlobalAlloc(GHND, bytes);
-    if hmem.is_null() {
-        return;
-    }
-
-    let ptr = GlobalLock(hmem) as *mut u16;
-    if !ptr.is_null() {
-        std::ptr::copy_nonoverlapping(wide.as_ptr(), ptr, wide.len());
-        GlobalUnlock(hmem);
-
-        if OpenClipboard(0) != 0 {
-            EmptyClipboard();
-            SetClipboardData(13 /* CF_UNICODETEXT */, hmem as isize);
-            CloseClipboard();
-        }
     }
 }
